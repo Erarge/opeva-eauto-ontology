@@ -1,0 +1,19 @@
+# Maven build output
+target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Application properties with sensitive data
+# Note: application.properties is tracked but credentials are auto-censored via git filters
+# See scripts/setup-git-filters.md for setup instructions
+

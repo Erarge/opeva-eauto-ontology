@@ -1,0 +1,6 @@
+spring.application.name=opevaontology
+connection.ip=YOUR_VIRTUOSO_IP
+connection.port=1111
+connection.username=YOUR_USERNAME
+connection.password=YOUR_PASSWORD
+
