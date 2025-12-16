@@ -14,6 +14,6 @@ target/
 Thumbs.db
 
 # Application properties with sensitive data
-# Note: application.properties is tracked but credentials are auto-censored via git filters
-# See scripts/setup-git-filters.md for setup instructions
+# Keep application.properties local only, use application.properties.example as template
+src/main/resources/application.properties
 
