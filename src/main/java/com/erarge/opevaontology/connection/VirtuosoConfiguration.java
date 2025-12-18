@@ -74,7 +74,7 @@ public class VirtuosoConfiguration {
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return "ETOVirtuosoConfiguration{"+
+		return "VirtuosoConfiguration{"+
 				"prefix=" + prefix +
 				"ip=" + ip +
 				"port=" + port +

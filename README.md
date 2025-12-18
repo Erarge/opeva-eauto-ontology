@@ -59,9 +59,9 @@ The application will start on `http://localhost:8080` by default (or the port co
 
 ## API Documentation
 
-### SPARQL Endpoint
+### 1. SPARQL Endpoint
 
-Execute SPARQL queries against the Virtuoso database.
+Execute raw SPARQL queries against the Virtuoso database.
 
 **Endpoint:** `POST /sparql`
 
@@ -70,6 +70,73 @@ Execute SPARQL queries against the Virtuoso database.
 **Request Body:** SPARQL query string (SELECT, ASK, CONSTRUCT, or DESCRIBE queries)
 
 **Response:** JSON array of objects, where each object represents a query result row with variable names as keys.
+
+### 2. Get Filter Options
+
+Retrieve available filter ranges and options for the frontend.
+
+**Endpoint:** `GET /api/filter-options`
+
+**Response:**
+```json
+{
+  "minTime": "2025-05-01T09:13:02",
+  "maxTime": "2025-05-02T08:43:27",
+  "distanceMmOptions": [70.0, 80.0, 90.0],
+  "socPercentOptions": [20.0, 30.0, 40.0, 50.0]
+}
+```
+
+### 3. Query by Time Interval
+
+Query charging session data within a time interval.
+
+**Endpoint:** `POST /api/query/time-interval`
+
+**Content-Type:** `application/json`
+
+**Request Body:**
+```json
+{
+  "from": "2025-05-01T09:13:02",
+  "to": "2025-05-02T08:43:27"
+}
+```
+
+**Response:** JSON array of charging session data with observations.
+
+### 4. Query with Filters
+
+Query charging session data with time interval, coil distance, and SOC filters.
+
+**Endpoint:** `POST /api/query/filtered`
+
+**Content-Type:** `application/json`
+
+**Request Body:**
+```json
+{
+  "from": "2025-05-01T09:13:02",
+  "to": "2025-05-02T08:43:27",
+  "distanceMm": 80.0,
+  "socPercent": 30.0
+}
+```
+
+**Note:** `distanceMm` and `socPercent` are optional (can be `null`).
+
+**Response:** JSON array of filtered charging session data with observations.
+
+### Frontend Interface
+
+A web interface is available at the root URL (`http://localhost:8080/`) that provides:
+
+- Automatic loading of filter options on page load
+- Form-based query interface with time pickers and dropdowns
+- Results displayed in a sortable table
+- Support for both query endpoints
+
+**Access the frontend:** Simply navigate to `http://localhost:8080/` in your browser after starting the application.
 
 #### Pre-configured Prefixes
 
@@ -101,11 +168,23 @@ curl -X POST http://localhost:8080/sparql \
   -d "SELECT ?s WHERE { ?s rdf:type eauto:SomeClass } LIMIT 5"
 ```
 
-**Count query:**
+**Get filter options:**
 ```bash
-curl -X POST http://localhost:8080/sparql \
-  -H "Content-Type: text/plain" \
-  -d "SELECT (COUNT(?s) AS ?count) WHERE { ?s ?p ?o }"
+curl -X GET http://localhost:8080/api/filter-options
+```
+
+**Query by time interval:**
+```bash
+curl -X POST http://localhost:8080/api/query/time-interval \
+  -H "Content-Type: application/json" \
+  -d '{"from":"2025-05-01T09:13:02","to":"2025-05-02T08:43:27"}'
+```
+
+**Query with filters:**
+```bash
+curl -X POST http://localhost:8080/api/query/filtered \
+  -H "Content-Type: application/json" \
+  -d '{"from":"2025-05-01T09:13:02","to":"2025-05-02T08:43:27","distanceMm":80.0,"socPercent":30.0}'
 ```
 
 #### Example Response
