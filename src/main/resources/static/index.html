@@ -4,69 +4,139 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OPEVA Home</title>
+
   <style>
-    html, body { height: 100%; }
-    body{
-      margin:0;
-      font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display:grid;
-      place-items:center;
-      background:#000; /* behind the stage */
+    html, body {
+      height: 100%;
+      margin: 0;
     }
 
-    /* Stage keeps the SAME aspect ratio as the SVG, so hotspot mapping stays correct */
-    .stage{
-      position:relative;
+    body {
+      display: grid;
+      place-items: center;
+      background: #000;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* === STAGE ===
+       Locks layout to SVG aspect ratio (1440 × 810 → 16:9)
+       All hotspots are positioned relative to this box
+    */
+    .stage {
+      position: relative;
       width: min(100vw, calc(100vh * 16 / 9));
       aspect-ratio: 16 / 9;
     }
 
-    .stage img{
-      width:100%;
-      height:100%;
-      display:block;
+    .stage img {
+      width: 100%;
+      height: 100%;
+      display: block;
     }
 
-    .overlay{
-      position:absolute;
-      inset:0;
+    .overlay {
+      position: absolute;
+      inset: 0;
       background: rgba(0,0,0,0.18);
-      pointer-events:none;
+      pointer-events: none;
     }
 
-    /* Scalable clickable region (hotspot) */
-    .demo-button{
-      position:absolute;
-
-      /* Demo 6&8 box coordinates (percent of the SVG/stage) */
-      left: 70.9%;
-      top:  9.1%;
-      width: 27.7%;
-      height: 13.8%;
-
-      border-radius: 7px;
-      background: rgba(255,255,255,0);
+    /* === GENERIC HOTSPOT === */
+    .hotspot {
+      position: absolute;
       z-index: 5;
-
-      /* For debugging alignment, turn this on temporarily */
-      /* outline: 3px solid rgba(102,126,234,0.9); */
+      border-radius: 5px;
+      background: rgba(255,255,255,0);
+      text-decoration: none;
     }
 
-    .demo-button:hover{
-      outline: 3px solid rgba(102,126,234,0.65);
+    /* Optional visual feedback */
+    .hotspot:hover {
+      outline: 3px solid rgba(102,126,234,0.7);
       cursor: pointer;
+    }
+
+    /* === HOTSPOT POSITIONS (percent of SVG) === */
+
+    /* Left / Top */
+    .demo5 {
+      left: 6.3%;
+      top: 7.2%;
+      width: 18.8%;
+      height: 10.9%;
+    }
+
+    /* Left / Middle */
+    .demo4 {
+      left: 3.4%;
+      top: 40.2%;
+      width: 18.6%;
+      height: 10.1%;
+    }
+
+    /* Center stack */
+    .demo1 {
+      left: 28.1%;
+      top: 40.0%;
+      width: 18.7%;
+      height: 16.4%;
+    }
+
+    .demo2 {
+      left: 28.1%;
+      top: 60.2%;
+      width: 18.7%;
+      height: 11.4%;
+    }
+
+    .demo3 {
+      left: 28.1%;
+      top: 74.3%;
+      width: 18.6%;
+      height: 10.0%;
+    }
+
+    /* Right column */
+    .demo6_8 {
+      /* YOUR ADJUSTED VALUES */
+      left: 71.5%;
+      top: 9.9%;
+      width: 26.2%;
+      height: 12%;
+    }
+
+    .demo7 {
+      left: 71.9%;
+      top: 26.0%;
+      width: 26.2%;
+      height: 10.1%;
+    }
+
+    .demo9 {
+      left: 71.9%;
+      top: 40.2%;
+      width: 26.1%;
+      height: 10.1%;
     }
   </style>
 </head>
+
 <body>
   <div class="stage">
     <img src="Demo_fig.svg" alt="OPEVA Home" />
     <div class="overlay" aria-hidden="true"></div>
 
-    <a class="demo-button"
-       href="demo6_8.html"
-       title="Open Demo 6 & 8"
-       aria-label="Open Demo 6 and 8"></a>
+    <!-- HOTSPOTS -->
+    <a class="hotspot demo5"   href="demo5.html"   aria-label="Open Demo 5"></a>
+    <a class="hotspot demo4"   href="demo4.html"   aria-label="Open Demo 4"></a>
+
+    <a class="hotspot demo1"   href="demo1.html"   aria-label="Open Demo 1"></a>
+    <a class="hotspot demo2"   href="demo2.html"   aria-label="Open Demo 2"></a>
+    <a class="hotspot demo3"   href="demo3.html"   aria-label="Open Demo 3"></a>
+
+    <a class="hotspot demo6_8" href="demo6_8.html" aria-label="Open Demo 6 and 8"></a>
+    <a class="hotspot demo7"   href="demo7.html"   aria-label="Open Demo 7"></a>
+    <a class="hotspot demo9"   href="demo9.html"   aria-label="Open Demo 9"></a>
   </div>
 </body>
 </html>
