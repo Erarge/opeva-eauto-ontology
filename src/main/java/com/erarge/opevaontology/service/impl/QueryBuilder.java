@@ -4,14 +4,27 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class QueryBuilder {
-    
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-    
+
+    private static final DateTimeFormatter DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+
+    // --- Common prefixes (avoid repeating in every method if you want) ---
+    private static final String PREFIXES =
+            "PREFIX eauto: <https://cloud.erarge.com.tr/ontologies/eauto#>\n" +
+            "PREFIX sosa:  <http://www.w3.org/ns/sosa/>\n" +
+            "PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>\n" +
+            "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>\n\n";
+
+    /**
+     * Wide-row query: sessions + metadata + pivoted sensor values per (session, tNorm).
+     * Optimized via VALUES(?prop) and less unnecessary joins.
+     */
     public static String buildTimeIntervalQuery(LocalDateTime from, LocalDateTime to) {
         String fromStr = from.format(DATE_TIME_FORMATTER);
         String toStr = to.format(DATE_TIME_FORMATTER);
-        
-        return "SELECT\n" +
+
+        return PREFIXES +
+                "SELECT\n" +
                 "  ?session\n" +
                 "  ?sourceFile\n" +
                 "  ?location\n" +
@@ -39,16 +52,9 @@ public class QueryBuilder {
                 "  BIND(\"" + fromStr + "\"^^xsd:dateTime AS ?from)\n" +
                 "  BIND(\"" + toStr + "\"^^xsd:dateTime AS ?to)\n" +
                 "\n" +
-                "  BIND(\"\" AS ?p_sourceFile)\n" +
-                "  BIND(\"\" AS ?p_location)\n" +
-                "  BIND(\"\" AS ?p_timeOfDay)\n" +
-                "  BIND(-1.0 AS ?p_socPercent)\n" +
-                "  BIND(-1.0 AS ?p_distanceMm)\n" +
-                "  BIND(\"\" AS ?p_coilType)\n" +
-                "  BIND(-1.0 AS ?p_durationMin)\n" +
-                "  BIND(\"\" AS ?p_chargerIriStr)\n" +
-                "\n" +
-                "  ?session eauto:wpt_sourceFile  ?sourceFile ;\n" +
+                "  # --- Session metadata (join once per session) ---\n" +
+                "  ?session a eauto:ChargingSession ;\n" +
+                "           eauto:wpt_sourceFile  ?sourceFile ;\n" +
                 "           eauto:wpt_location    ?location ;\n" +
                 "           eauto:wpt_timeOfDay   ?timeOfDay ;\n" +
                 "           eauto:wpt_socPercent  ?socPercent ;\n" +
@@ -57,14 +63,14 @@ public class QueryBuilder {
                 "           eauto:wpt_durationMin ?durationMin ;\n" +
                 "           eauto:usesCharger     ?charger .\n" +
                 "\n" +
-                "  FILTER( ?p_sourceFile = \"\" || STR(?sourceFile) = ?p_sourceFile )\n" +
-                "  FILTER( ?p_location   = \"\" || STR(?location)   = ?p_location )\n" +
-                "  FILTER( ?p_timeOfDay  = \"\" || STR(?timeOfDay)  = ?p_timeOfDay )\n" +
-                "  FILTER( ?p_coilType   = \"\" || STR(?coilType)   = ?p_coilType )\n" +
-                "  FILTER( ?p_socPercent   < 0 || xsd:double(?socPercent)   = ?p_socPercent )\n" +
-                "  FILTER( ?p_distanceMm   < 0 || xsd:double(?distanceMm)   = ?p_distanceMm )\n" +
-                "  FILTER( ?p_durationMin  < 0 || xsd:double(?durationMin)  = ?p_durationMin )\n" +
-                "  FILTER( ?p_chargerIriStr = \"\" || STR(?charger) = ?p_chargerIriStr )\n" +
+                "  # --- Observations in time window, restricted to necessary properties ---\n" +
+                "  VALUES ?prop {\n" +
+                "    eauto:op_v_pri_v eauto:op_a_pri_a\n" +
+                "    eauto:op_v_sin_v eauto:op_a_sin_a\n" +
+                "    eauto:op_v_sout_v eauto:op_a_sout_a\n" +
+                "    eauto:op_t_coil_c eauto:op_t_ambiant_c\n" +
+                "    eauto:op_p_pri eauto:op_p_sin eauto:op_efficiency\n" +
+                "  }\n" +
                 "\n" +
                 "  ?obs a sosa:Observation ;\n" +
                 "       sosa:hasFeatureOfInterest ?session ;\n" +
@@ -72,134 +78,224 @@ public class QueryBuilder {
                 "       sosa:observedProperty ?prop ;\n" +
                 "       sosa:hasSimpleResult ?val .\n" +
                 "\n" +
-                "  BIND( xsd:dateTime(REPLACE(STR(?time), \" \", \"T\")) AS ?tNorm )\n" +
+                "  # Normalize time: handle \"YYYY-MM-DD HH:mm:ss\" and ISO \"...Z\"\n" +
+                "  BIND(STR(?time) AS ?tStr0)\n" +
+                "  BIND(REPLACE(?tStr0, \" \", \"T\") AS ?tStr1)\n" +
+                "  BIND(IF(CONTAINS(?tStr1, \"Z\"), SUBSTR(?tStr1, 1, 19), SUBSTR(?tStr1, 1, 19)) AS ?tStr19)\n" +
+                "  BIND(xsd:dateTime(?tStr19) AS ?tNorm)\n" +
                 "\n" +
-                "  FILTER( ?tNorm >= ?from && ?tNorm <= ?to )\n" +
-                "\n" +
-                "  FILTER (?prop IN (\n" +
-                "    eauto:op_v_pri_v, eauto:op_a_pri_a,\n" +
-                "    eauto:op_v_sin_v, eauto:op_a_sin_a,\n" +
-                "    eauto:op_v_sout_v, eauto:op_a_sout_a,\n" +
-                "    eauto:op_t_coil_c, eauto:op_t_ambiant_c,\n" +
-                "    eauto:op_p_pri, eauto:op_p_sin, eauto:op_efficiency\n" +
-                "  ))\n" +
+                "  FILTER(?tNorm >= ?from && ?tNorm <= ?to)\n" +
                 "}\n" +
                 "GROUP BY\n" +
                 "  ?session ?sourceFile ?location ?timeOfDay ?socPercent ?distanceMm ?coilType ?durationMin ?charger ?tNorm\n" +
-                "ORDER BY ?session ?tNorm";
+                "ORDER BY ?session ?tNorm\n";
+                // Optional pagination:
+                // + "LIMIT 5000 OFFSET 0";
     }
-    
+
+    /**
+     * Same as time interval but adds numeric filters for distanceMm and socPercent.
+     */
     public static String buildFilteredQuery(LocalDateTime from, LocalDateTime to, Double distanceMm, Double socPercent) {
         String fromStr = from.format(DATE_TIME_FORMATTER);
         String toStr = to.format(DATE_TIME_FORMATTER);
-        
-        String distanceFilter = distanceMm != null ? distanceMm.toString() : "-1.0";
-        String socFilter = socPercent != null ? socPercent.toString() : "-1.0";
-        
-        return "SELECT\n" +
-                "  ?session\n" +
-                "  ?sourceFile\n" +
-                "  ?location\n" +
-                "  ?timeOfDay\n" +
-                "  ?socPercent\n" +
-                "  ?distanceMm\n" +
-                "  ?coilType\n" +
-                "  ?durationMin\n" +
-                "  ?charger\n" +
-                "  ?tNorm\n" +
-                "\n" +
-                "  (MAX(IF(?prop = eauto:op_v_pri_v,     xsd:double(STR(?val)), UNDEF)) AS ?v_pri_v)\n" +
-                "  (MAX(IF(?prop = eauto:op_a_pri_a,     xsd:double(STR(?val)), UNDEF)) AS ?a_pri_a)\n" +
-                "  (MAX(IF(?prop = eauto:op_v_sin_v,     xsd:double(STR(?val)), UNDEF)) AS ?v_sin_v)\n" +
-                "  (MAX(IF(?prop = eauto:op_a_sin_a,     xsd:double(STR(?val)), UNDEF)) AS ?a_sin_a)\n" +
-                "  (MAX(IF(?prop = eauto:op_v_sout_v,    xsd:double(STR(?val)), UNDEF)) AS ?v_sout_v)\n" +
-                "  (MAX(IF(?prop = eauto:op_a_sout_a,    xsd:double(STR(?val)), UNDEF)) AS ?a_sout_a)\n" +
-                "  (MAX(IF(?prop = eauto:op_t_coil_c,    xsd:double(STR(?val)), UNDEF)) AS ?t_coil_c)\n" +
-                "  (MAX(IF(?prop = eauto:op_t_ambiant_c, xsd:double(STR(?val)), UNDEF)) AS ?t_ambiant_c)\n" +
-                "  (MAX(IF(?prop = eauto:op_p_pri,       xsd:double(STR(?val)), UNDEF)) AS ?p_pri)\n" +
-                "  (MAX(IF(?prop = eauto:op_p_sin,       xsd:double(STR(?val)), UNDEF)) AS ?p_sin)\n" +
-                "  (MAX(IF(?prop = eauto:op_efficiency,  xsd:double(STR(?val)), UNDEF)) AS ?efficiency)\n" +
-                "\n" +
-                "WHERE {\n" +
-                "  BIND(\"" + fromStr + "\"^^xsd:dateTime AS ?from)\n" +
-                "  BIND(\"" + toStr + "\"^^xsd:dateTime AS ?to)\n" +
-                "\n" +
-                "  BIND(\"\" AS ?p_sourceFile)\n" +
-                "  BIND(\"\" AS ?p_location)\n" +
-                "  BIND(\"\" AS ?p_timeOfDay)\n" +
-                "  BIND(" + socFilter + " AS ?p_socPercent)\n" +
-                "  BIND(" + distanceFilter + " AS ?p_distanceMm)\n" +
-                "  BIND(\"\" AS ?p_coilType)\n" +
-                "  BIND(-1.0 AS ?p_durationMin)\n" +
-                "  BIND(\"\" AS ?p_chargerIriStr)\n" +
-                "\n" +
-                "  ?session eauto:wpt_sourceFile  ?sourceFile ;\n" +
-                "           eauto:wpt_location    ?location ;\n" +
-                "           eauto:wpt_timeOfDay   ?timeOfDay ;\n" +
-                "           eauto:wpt_socPercent  ?socPercent ;\n" +
-                "           eauto:wpt_distanceMm  ?distanceMm ;\n" +
-                "           eauto:wpt_coilType    ?coilType ;\n" +
-                "           eauto:wpt_durationMin ?durationMin ;\n" +
-                "           eauto:usesCharger     ?charger .\n" +
-                "\n" +
-                "  FILTER( ?p_sourceFile = \"\" || STR(?sourceFile) = ?p_sourceFile )\n" +
-                "  FILTER( ?p_location   = \"\" || STR(?location)   = ?p_location )\n" +
-                "  FILTER( ?p_timeOfDay  = \"\" || STR(?timeOfDay)  = ?p_timeOfDay )\n" +
-                "  FILTER( ?p_coilType   = \"\" || STR(?coilType)   = ?p_coilType )\n" +
-                "  FILTER( ?p_socPercent   < 0 || xsd:double(?socPercent)   = ?p_socPercent )\n" +
-                "  FILTER( ?p_distanceMm   < 0 || xsd:double(?distanceMm)   = ?p_distanceMm )\n" +
-                "  FILTER( ?p_durationMin  < 0 || xsd:double(?durationMin)  = ?p_durationMin )\n" +
-                "  FILTER( ?p_chargerIriStr = \"\" || STR(?charger) = ?p_chargerIriStr )\n" +
-                "\n" +
-                "  ?obs a sosa:Observation ;\n" +
-                "       sosa:hasFeatureOfInterest ?session ;\n" +
-                "       sosa:resultTime ?time ;\n" +
-                "       sosa:observedProperty ?prop ;\n" +
-                "       sosa:hasSimpleResult ?val .\n" +
-                "\n" +
-                "  BIND( xsd:dateTime(REPLACE(STR(?time), \" \", \"T\")) AS ?tNorm )\n" +
-                "\n" +
-                "  FILTER( ?tNorm >= ?from && ?tNorm <= ?to )\n" +
-                "\n" +
-                "  FILTER (?prop IN (\n" +
-                "    eauto:op_v_pri_v, eauto:op_a_pri_a,\n" +
-                "    eauto:op_v_sin_v, eauto:op_a_sin_a,\n" +
-                "    eauto:op_v_sout_v, eauto:op_a_sout_a,\n" +
-                "    eauto:op_t_coil_c, eauto:op_t_ambiant_c,\n" +
-                "    eauto:op_p_pri, eauto:op_p_sin, eauto:op_efficiency\n" +
-                "  ))\n" +
-                "}\n" +
-                "GROUP BY\n" +
-                "  ?session ?sourceFile ?location ?timeOfDay ?socPercent ?distanceMm ?coilType ?durationMin ?charger ?tNorm\n" +
-                "ORDER BY ?session ?tNorm";
+
+        String distanceFilter = (distanceMm != null) ? distanceMm.toString() : null;
+        String socFilter = (socPercent != null) ? socPercent.toString() : null;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(PREFIXES);
+
+        sb.append("SELECT\n")
+          .append("  ?session\n")
+          .append("  ?sourceFile\n")
+          .append("  ?location\n")
+          .append("  ?timeOfDay\n")
+          .append("  ?socPercent\n")
+          .append("  ?distanceMm\n")
+          .append("  ?coilType\n")
+          .append("  ?durationMin\n")
+          .append("  ?charger\n")
+          .append("  ?tNorm\n")
+          .append("\n")
+          .append("  (MAX(IF(?prop = eauto:op_v_pri_v,     xsd:double(STR(?val)), UNDEF)) AS ?v_pri_v)\n")
+          .append("  (MAX(IF(?prop = eauto:op_a_pri_a,     xsd:double(STR(?val)), UNDEF)) AS ?a_pri_a)\n")
+          .append("  (MAX(IF(?prop = eauto:op_v_sin_v,     xsd:double(STR(?val)), UNDEF)) AS ?v_sin_v)\n")
+          .append("  (MAX(IF(?prop = eauto:op_a_sin_a,     xsd:double(STR(?val)), UNDEF)) AS ?a_sin_a)\n")
+          .append("  (MAX(IF(?prop = eauto:op_v_sout_v,    xsd:double(STR(?val)), UNDEF)) AS ?v_sout_v)\n")
+          .append("  (MAX(IF(?prop = eauto:op_a_sout_a,    xsd:double(STR(?val)), UNDEF)) AS ?a_sout_a)\n")
+          .append("  (MAX(IF(?prop = eauto:op_t_coil_c,    xsd:double(STR(?val)), UNDEF)) AS ?t_coil_c)\n")
+          .append("  (MAX(IF(?prop = eauto:op_t_ambiant_c, xsd:double(STR(?val)), UNDEF)) AS ?t_ambiant_c)\n")
+          .append("  (MAX(IF(?prop = eauto:op_p_pri,       xsd:double(STR(?val)), UNDEF)) AS ?p_pri)\n")
+          .append("  (MAX(IF(?prop = eauto:op_p_sin,       xsd:double(STR(?val)), UNDEF)) AS ?p_sin)\n")
+          .append("  (MAX(IF(?prop = eauto:op_efficiency,  xsd:double(STR(?val)), UNDEF)) AS ?efficiency)\n")
+          .append("\n")
+          .append("WHERE {\n")
+          .append("  BIND(\"").append(fromStr).append("\"^^xsd:dateTime AS ?from)\n")
+          .append("  BIND(\"").append(toStr).append("\"^^xsd:dateTime AS ?to)\n")
+          .append("\n")
+          .append("  ?session a eauto:ChargingSession ;\n")
+          .append("           eauto:wpt_sourceFile  ?sourceFile ;\n")
+          .append("           eauto:wpt_location    ?location ;\n")
+          .append("           eauto:wpt_timeOfDay   ?timeOfDay ;\n")
+          .append("           eauto:wpt_socPercent  ?socPercent ;\n")
+          .append("           eauto:wpt_distanceMm  ?distanceMm ;\n")
+          .append("           eauto:wpt_coilType    ?coilType ;\n")
+          .append("           eauto:wpt_durationMin ?durationMin ;\n")
+          .append("           eauto:usesCharger     ?charger .\n");
+
+        // Only add filters if user provided them (avoid extra FILTER ops)
+        if (socFilter != null) {
+            sb.append("  FILTER(xsd:double(?socPercent) = ").append(socFilter).append(")\n");
+        }
+        if (distanceFilter != null) {
+            sb.append("  FILTER(xsd:double(?distanceMm) = ").append(distanceFilter).append(")\n");
+        }
+
+        sb.append("\n")
+          .append("  VALUES ?prop {\n")
+          .append("    eauto:op_v_pri_v eauto:op_a_pri_a\n")
+          .append("    eauto:op_v_sin_v eauto:op_a_sin_a\n")
+          .append("    eauto:op_v_sout_v eauto:op_a_sout_a\n")
+          .append("    eauto:op_t_coil_c eauto:op_t_ambiant_c\n")
+          .append("    eauto:op_p_pri eauto:op_p_sin eauto:op_efficiency\n")
+          .append("  }\n")
+          .append("\n")
+          .append("  ?obs a sosa:Observation ;\n")
+          .append("       sosa:hasFeatureOfInterest ?session ;\n")
+          .append("       sosa:resultTime ?time ;\n")
+          .append("       sosa:observedProperty ?prop ;\n")
+          .append("       sosa:hasSimpleResult ?val .\n")
+          .append("\n")
+          .append("  BIND(STR(?time) AS ?tStr0)\n")
+          .append("  BIND(REPLACE(?tStr0, \" \", \"T\") AS ?tStr1)\n")
+          .append("  BIND(IF(CONTAINS(?tStr1, \"Z\"), SUBSTR(?tStr1, 1, 19), SUBSTR(?tStr1, 1, 19)) AS ?tStr19)\n")
+          .append("  BIND(xsd:dateTime(?tStr19) AS ?tNorm)\n")
+          .append("\n")
+          .append("  FILTER(?tNorm >= ?from && ?tNorm <= ?to)\n")
+          .append("}\n")
+          .append("GROUP BY\n")
+          .append("  ?session ?sourceFile ?location ?timeOfDay ?socPercent ?distanceMm ?coilType ?durationMin ?charger ?tNorm\n")
+          .append("ORDER BY ?session ?tNorm\n");
+
+        return sb.toString();
     }
-    
+
+    /**
+     * Time range query: optimized by avoiding extra patterns.
+     * Note: if your stored times are already xsd:dateTime with Z, this keeps only first 19 chars.
+     */
     public static String buildTimeRangeQuery() {
-        return "SELECT (MIN(?tNorm) AS ?minTime) (MAX(?tNorm) AS ?maxTime)\n" +
+        return PREFIXES +
+                "SELECT (MIN(?tNorm) AS ?minTime) (MAX(?tNorm) AS ?maxTime)\n" +
                 "WHERE {\n" +
                 "  ?obs a sosa:Observation ;\n" +
                 "       sosa:resultTime ?time .\n" +
-                "\n" +
-                "  BIND(xsd:dateTime(REPLACE(STR(?time), \" \", \"T\")) AS ?tNorm)\n" +
+                "  BIND(STR(?time) AS ?tStr0)\n" +
+                "  BIND(REPLACE(?tStr0, \" \", \"T\") AS ?tStr1)\n" +
+                "  BIND(SUBSTR(?tStr1, 1, 19) AS ?tStr19)\n" +
+                "  BIND(xsd:dateTime(?tStr19) AS ?tNorm)\n" +
                 "}";
     }
-    
+
+    /**
+     * Distance options: keep DISTINCT (needed for UI), but avoid ORDER BY if you don't need sorted.
+     * If you want sorted in UI, keep ORDER BY here or sort client-side.
+     */
     public static String buildDistanceOptionsQuery() {
-        return "SELECT DISTINCT ?distanceMm\n" +
+        return PREFIXES +
+                "SELECT DISTINCT ?distanceMm\n" +
                 "WHERE {\n" +
                 "  ?session a eauto:ChargingSession ;\n" +
                 "           eauto:wpt_distanceMm ?distanceMm .\n" +
                 "}\n" +
-                "ORDER BY ?distanceMm";
+                "ORDER BY xsd:double(?distanceMm)";
     }
-    
+
+    /**
+     * SOC options: same logic as distance.
+     */
     public static String buildSocOptionsQuery() {
-        return "SELECT DISTINCT ?socPercent\n" +
+        return PREFIXES +
+                "SELECT DISTINCT ?socPercent\n" +
                 "WHERE {\n" +
                 "  ?session a eauto:ChargingSession ;\n" +
                 "           eauto:wpt_socPercent ?socPercent .\n" +
                 "}\n" +
-                "ORDER BY ?socPercent";
+                "ORDER BY xsd:double(?socPercent)";
+    }
+
+    /**
+     * OPTIONAL: if you decide to follow the "split queries" approach,
+     * this returns session metadata only (fast, small).
+     */
+    public static String buildSessionMetadataQuery(LocalDateTime from, LocalDateTime to) {
+        String fromStr = from.format(DATE_TIME_FORMATTER);
+        String toStr = to.format(DATE_TIME_FORMATTER);
+
+        return PREFIXES +
+                "SELECT DISTINCT ?session ?sourceFile ?location ?timeOfDay ?socPercent ?distanceMm ?coilType ?durationMin ?charger\n" +
+                "WHERE {\n" +
+                "  BIND(\"" + fromStr + "\"^^xsd:dateTime AS ?from)\n" +
+                "  BIND(\"" + toStr + "\"^^xsd:dateTime AS ?to)\n" +
+                "\n" +
+                "  ?session a eauto:ChargingSession ;\n" +
+                "           eauto:wpt_sourceFile  ?sourceFile ;\n" +
+                "           eauto:wpt_location    ?location ;\n" +
+                "           eauto:wpt_timeOfDay   ?timeOfDay ;\n" +
+                "           eauto:wpt_socPercent  ?socPercent ;\n" +
+                "           eauto:wpt_distanceMm  ?distanceMm ;\n" +
+                "           eauto:wpt_coilType    ?coilType ;\n" +
+                "           eauto:wpt_durationMin ?durationMin ;\n" +
+                "           eauto:usesCharger     ?charger .\n" +
+                "\n" +
+                "  # only sessions that have observations in the window\n" +
+                "  ?obs a sosa:Observation ;\n" +
+                "       sosa:hasFeatureOfInterest ?session ;\n" +
+                "       sosa:resultTime ?time .\n" +
+                "\n" +
+                "  BIND(STR(?time) AS ?tStr0)\n" +
+                "  BIND(REPLACE(?tStr0, \" \", \"T\") AS ?tStr1)\n" +
+                "  BIND(SUBSTR(?tStr1, 1, 19) AS ?tStr19)\n" +
+                "  BIND(xsd:dateTime(?tStr19) AS ?tNorm)\n" +
+                "  FILTER(?tNorm >= ?from && ?tNorm <= ?to)\n" +
+                "}\n";
+    }
+
+    /**
+     * OPTIONAL: narrow readings (often fastest); pivot in Java instead of SPARQL.
+     */
+    public static String buildNarrowReadingsQuery(LocalDateTime from, LocalDateTime to) {
+        String fromStr = from.format(DATE_TIME_FORMATTER);
+        String toStr = to.format(DATE_TIME_FORMATTER);
+
+        return PREFIXES +
+                "SELECT ?session ?tNorm ?prop ?val\n" +
+                "WHERE {\n" +
+                "  BIND(\"" + fromStr + "\"^^xsd:dateTime AS ?from)\n" +
+                "  BIND(\"" + toStr + "\"^^xsd:dateTime AS ?to)\n" +
+                "\n" +
+                "  VALUES ?prop {\n" +
+                "    eauto:op_v_pri_v eauto:op_a_pri_a\n" +
+                "    eauto:op_v_sin_v eauto:op_a_sin_a\n" +
+                "    eauto:op_v_sout_v eauto:op_a_sout_a\n" +
+                "    eauto:op_t_coil_c eauto:op_t_ambiant_c\n" +
+                "    eauto:op_p_pri eauto:op_p_sin eauto:op_efficiency\n" +
+                "  }\n" +
+                "\n" +
+                "  ?obs a sosa:Observation ;\n" +
+                "       sosa:hasFeatureOfInterest ?session ;\n" +
+                "       sosa:resultTime ?time ;\n" +
+                "       sosa:observedProperty ?prop ;\n" +
+                "       sosa:hasSimpleResult ?val .\n" +
+                "\n" +
+                "  BIND(STR(?time) AS ?tStr0)\n" +
+                "  BIND(REPLACE(?tStr0, \" \", \"T\") AS ?tStr1)\n" +
+                "  BIND(SUBSTR(?tStr1, 1, 19) AS ?tStr19)\n" +
+                "  BIND(xsd:dateTime(?tStr19) AS ?tNorm)\n" +
+                "\n" +
+                "  FILTER(?tNorm >= ?from && ?tNorm <= ?to)\n" +
+                "}\n" +
+                "ORDER BY ?session ?tNorm\n";
     }
 }
-
