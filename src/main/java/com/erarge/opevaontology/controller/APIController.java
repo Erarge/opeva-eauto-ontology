@@ -27,6 +27,11 @@ public class APIController {
     public Object sparql(@RequestBody final String query) {
 		return service.sparql(query);
 	}
+
+	@PostMapping(value = "/sparql-demo5")
+	public Object sparqlDemo5(@RequestBody final String query) {
+		return service.sparqlDemo5(query);
+	}
 	
 	@GetMapping(value = "/api/filter-options")
 	public FilterOptionsResponse getFilterOptions() {

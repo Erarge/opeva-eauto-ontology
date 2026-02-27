@@ -9,6 +9,8 @@ import com.erarge.opevaontology.dto.TimeIntervalQueryRequest;
 
 public interface IService {
     public Object sparql(String query);
+
+    public Object sparqlDemo5(String query);
     
     public List<Map<String, String>> queryByTimeInterval(TimeIntervalQueryRequest request);
     

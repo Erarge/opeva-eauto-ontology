@@ -13,6 +13,7 @@ import com.erarge.opevaontology.dto.FilterOptionsResponse;
 import com.erarge.opevaontology.dto.FilteredQueryRequest;
 import com.erarge.opevaontology.dto.TimeIntervalQueryRequest;
 import com.erarge.opevaontology.repository.CustomSPARQL;
+import com.erarge.opevaontology.repository.CustomSPARQLDemo5;
 import com.erarge.opevaontology.service.IService;
 
 @Service
@@ -24,6 +25,11 @@ public class ServiceImpl implements IService {
     @Override
     public Object sparql(String query) {
         return CustomSPARQL.sparqlQueryExecution(query);
+    }
+
+    @Override
+    public Object sparqlDemo5(String query) {
+        return CustomSPARQLDemo5.sparqlQueryExecution(query);
     }
 
     @Override
