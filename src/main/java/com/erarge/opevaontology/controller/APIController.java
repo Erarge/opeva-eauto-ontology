@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.erarge.opevaontology.dto.FilterOptionsResponse;
 import com.erarge.opevaontology.dto.FilteredQueryRequest;
 import com.erarge.opevaontology.dto.TimeIntervalQueryRequest;
+import com.erarge.opevaontology.dto.demo5.KpisResponse;
+import com.erarge.opevaontology.dto.demo5.RouteSizeDistributionDTO;
+import com.erarge.opevaontology.dto.demo5.RouteTimeWindowDTO;
 import com.erarge.opevaontology.service.IService;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -47,4 +51,21 @@ public class APIController {
 	public List<Map<String, String>> queryFiltered(@RequestBody final FilteredQueryRequest request) {
 		return service.queryFiltered(request);
 	}
+
+	
+@GetMapping("/api/demo5/kpis")
+    public ResponseEntity<KpisResponse> getKpis() {
+        return ResponseEntity.ok(service.getKpis());
+    }
+
+    @GetMapping("/api/demo5/route-mix/size-distribution")
+    public ResponseEntity<List<RouteSizeDistributionDTO>> getRouteMixSizeDistribution() {
+        return ResponseEntity.ok(service.getRouteMixSizeDistribution());
+    }
+
+    @GetMapping("/api/demo5/route-mix/time-window")
+    public ResponseEntity<List<RouteTimeWindowDTO>> getRouteMixTimeWindow() {
+        return ResponseEntity.ok(service.getRouteMixTimeWindow());
+    }
+
 }

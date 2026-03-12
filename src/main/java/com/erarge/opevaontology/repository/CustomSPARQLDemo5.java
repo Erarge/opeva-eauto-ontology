@@ -37,7 +37,7 @@ public class CustomSPARQLDemo5 {
 				+ "PREFIX qudt-1-1: <http://qudt.org/1.1/schema/qudt#>\r\n"
 				+ "PREFIX qudt-unit-1-1: <http://qudt.org/1.1/vocab/unit#>\r\n" +
 				query;
-		//System.out.println(sparql);
+		System.out.println(sparql);
 		VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create(sparql, graph);
 		
 		ResultSet results = vqe.execSelect();

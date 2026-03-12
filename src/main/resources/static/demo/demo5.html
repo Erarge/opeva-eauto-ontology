@@ -2,814 +2,331 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OPEVA E-Auto Ontology Query Interface</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OPEVA E-Auto Ontology Query Interface — Demo 5</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="../css/demo.css">
+  <link rel="stylesheet" href="../css/demo.css" />
+  <style>
+    /* Minimal layout helpers (in case demo.css does not define these) */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin: 8px 0 14px 0;
+    }
+    .kpi-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px 14px;
+      background: #fff;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+    }
+    .kpi-title { font-size: 12px; color: #6b7280; }
+    .kpi-value { font-size: 22px; font-weight: 700; color: #111827; }
+    .chart-container-wrapper { margin-top: 18px; }
+    .download-inline { margin: 10px 0 0 0; }
+    .muted { color: #6b7280; font-size: 13px; }
+    .success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: 8px 12px; border-radius: 6px; }
+    .error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 8px 12px; border-radius: 6px; }
+  </style>
 </head>
-
 <body>
   <div class="container">
+
     <div class="header">
       <h1>Demo 5: Energy Efficient Route Planning for Last Mile Delivery</h1>
       <p>
-        <b>Demo #5</b>’s objective is to propose an energy efficient route planning of EVs for last-mile delivery services. In detail, it offers an advanced EV route planning solution to enhance energy efficiency in last-mile deliveries by integrating internal and external data for dynamic routing. By simulating scenarios with EV fleets, it demonstrates the benefits of the technology to promote wider EV adoption. This serves as a roadmap for future projects, supporting EVs as a sustainable alternative in urban delivery operations.
-
-The implementation architecture given in the next Figure is designed for testing the efficiency and integration of routing services for various dimensions. The cloud platform is designed to implement fleet management software and route optimization algorithms. Information of EV fleets are collected through an IoT Middleware. Then, the resulting routes are also transferred to the EVs using the IoT Middleware. Simulation of Urban MObility (SUMO) is also integrated to the system for verification of optimization results a-priori to field implementations. Both real EVs and those in SUMO are tracked on the digital twin of the system. Then, the Edge-AI on the EVs can calculate SoC and SoH additionally to BMS in L5 EVs. All the information are sent to the cloud through the IoT Middleware.
+        <b>Demo #5</b>’s objective is to propose an energy‑efficient route planning of EVs for last‑mile delivery services. In detail, it offers an advanced EV route planning solution to enhance energy efficiency in last‑mile deliveries by integrating internal and external data for dynamic routing. By simulating scenarios with EV fleets, it demonstrates the benefits of the technology to promote wider EV adoption. This serves as a roadmap for future projects, supporting EVs as a sustainable alternative in urban delivery operations.
+        The implementation architecture given in the next Figure is designed for testing the efficiency and integration of routing services for various dimensions. The cloud platform is designed to implement fleet management software and route optimization algorithms. Information of EV fleets are collected through an IoT Middleware. Then, the resulting routes are also transferred to the EVs using the IoT Middleware. Simulation of Urban MObility (SUMO) is also integrated to the system for verification of optimization results a‑priori to field implementations. Both real EVs and those in SUMO are tracked on the digital twin of the system. Then, the Edge‑AI on the EVs can calculate SoC and SoH additionally to BMS in L5 EVs. All the information are sent to the cloud through the IoT Middleware.
       </p>
+
       <div class="figures-row">
         <figure class="figure w60">
-          <img src="../img/demo5-1.webp" alt="Demo 5 test architecture for implementation" class="header-img" />
+          <img src="../img/demo5-1.webp" alt="Demo 5 test architecture for implementation" class="header-img"/>
           <figcaption class="figure-caption">Figure 1. Demo 5 test architecture for implementation.</figcaption>
         </figure>
       </div>
-      <p style="margin-top: 10px;">The route optimization is also tested for missions of autonomous delivery solutions in last mile delivery (as shown in Figure 2). LOXO’s advanced autonomous vehicle technology with its logistic partner extensive logistics expertise, the project redefines last- and middle-mile delivery processes (as shown in Figure 3). Through the OPEVA project, the necessary groundwork, including data collection, simulation, and the training of the LOXOFuser—a critical element of LOXO’s autonomous driving software—will be laid.</p>
-      
+
+      <p style="margin-top: 10px;">
+        The route optimization is also tested for missions of autonomous delivery solutions in last‑mile delivery (as shown in Figure 2). LOXO’s advanced autonomous vehicle technology with its logistic partner extensive logistics expertise, the project redefines last‑ and middle‑mile delivery processes (as shown in Figure 3). Through the OPEVA project, the necessary groundwork, including data collection, simulation, and the training of the LOXOFuser—a critical element of LOXO’s autonomous driving software—will be laid.
+      </p>
+
       <div class="figures-row">
         <figure class="figure w45">
-          <img src="../img/demo5-2.webp" alt="Route optimizationx" class="header-img" />
+          <img src="../img/demo5-2.webp" alt="Route optimization" class="header-img"/>
           <figcaption class="figure-caption">Figure 2. Route optimization.</figcaption>
         </figure>
         <figure class="figure w45">
-          <img src="../img/demo5-3.webp" alt="OPEVA autonomous delivery." class="header-img" />
+          <img src="../img/demo5-3.webp" alt="OPEVA autonomous delivery." class="header-img"/>
           <figcaption class="figure-caption">Figure 3. OPEVA autonomous delivery.</figcaption>
         </figure>
       </div>
-
     </div>
+
     <div class="content">
+
+      <!-- Notifications -->
       <div id="error-message" class="error" style="display:none;"></div>
       <div id="success-message" class="success" style="display:none;"></div>
 
-      <div class="form-section">
-        <h2>Query Parameters</h2>
-        <div class="info-box" id="options-info">
-          <p><strong>Loading filter options...</strong></p>
-        </div>
-
-        <!-- Performance panel -->
-        <div class="perf-box" id="perf-panel" style="display:none;">
-          <h3>Performance</h3>
-          <div class="perf-grid" id="perf-grid"></div>
-          <div class="perf-muted" id="perf-note" style="margin-top:8px;"></div>
-        </div>
-
-        <form id="query-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="from-time">From Time *</label>
-              <input type="datetime-local" id="from-time" name="from" required />
-            </div>
-            <div class="form-group">
-              <label for="to-time">To Time *</label>
-              <input type="datetime-local" id="to-time" name="to" required />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="distance-mm">Coil Distance (mm) - Optional</label>
-              <select id="distance-mm" name="distanceMm">
-                <option value="">All distances</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="soc-percent">SOC (%) - Optional</label>
-              <select id="soc-percent" name="socPercent">
-                <option value="">All SOC values</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="button-group">
-            <button type="button" class="btn-primary" onclick="queryByTimeInterval()">Query by Time Interval</button>
-            <button type="button" class="btn-primary" onclick="queryFiltered()">Query with Filters</button>
-            <button type="button" class="btn-clear" onclick="clearForm()">Clear Form</button>
-            <button type="button" class="btn-secondary" onclick="loadFilterOptions()">Reload Options</button>
-          </div>
-        </form>
+      <!-- Performance mini-panel -->
+      <div class="perf-box" id="perf-panel" style="display:none;">
+        <h3>Performance</h3>
+        <div class="perf-grid" id="perf-grid"></div>
+        <div class="perf-muted" id="perf-note" style="margin-top:8px;"></div>
       </div>
 
-      <div class="results-section">
-        <div class="results-header">
-          <h2>Query Results</h2>
-          <div class="results-count" id="results-count"></div>
+      <!-- ===== Demo 5 Overview (KPIs + Charts) ===== -->
+      <div class="results-section" style="margin-top: 8px;">
+        <h2>Demo 5 Overview</h2>
+
+        <!-- KPI Row -->
+        <div id="demo5-kpis" class="kpi-row">
+          <div class="kpi-card"><div class="kpi-title">Routes</div><div class="kpi-value" id="kpi-routes">-</div></div>
+          <div class="kpi-card"><div class="kpi-title">Nodes</div><div class="kpi-value" id="kpi-nodes">-</div></div>
+          <div class="kpi-card"><div class="kpi-title">Customers</div><div class="kpi-value" id="kpi-customers">-</div></div>
+          <div class="kpi-card"><div class="kpi-title">Charging Stations</div><div class="kpi-value" id="kpi-cs">-</div></div>
+          <div class="kpi-card"><div class="kpi-title">Depots</div><div class="kpi-value" id="kpi-depots">-</div></div>
         </div>
 
-        <div id="loading" class="loading" style="display:none;">
-          <div class="loading-spinner"></div>
-          <p>Loading results...</p>
-        </div>
-
-        <div id="charts-section" style="display:none; margin-top: 30px;">
-          <div class="chart-container-wrapper">
-            <div class="chart-container">
-              <h3>Efficiency vs Power</h3>
-              <canvas id="efficiencyChart"></canvas>
+        <!-- Charts -->
+        <div class="chart-container-wrapper">
+          <div class="chart-container">
+            <h3>Routes by Size & Distribution</h3>
+            <canvas id="sizeDistChart"></canvas>
+            <div class="download-inline">
+              <button type="button" class="btn-secondary" id="btn-download-sizeDist">Download CSV</button>
+              <span class="muted" id="sizeDist-meta"></span>
             </div>
           </div>
+        </div>
 
-          <div class="chart-container-wrapper">
-            <div class="chart-container">
-              <h3>Temperatures vs Power</h3>
-              <canvas id="temperatureChart"></canvas>
+        <div class="chart-container-wrapper">
+          <div class="chart-container">
+            <h3>Routes by Time Window</h3>
+            <canvas id="twChart"></canvas>
+            <div class="download-inline">
+              <button type="button" class="btn-secondary" id="btn-download-tw">Download CSV</button>
+              <span class="muted" id="tw-meta"></span>
             </div>
           </div>
         </div>
 
-        <!-- DOWNLOAD BUTTON (before dataset table) -->
-        <div class="download-bar" id="download-bar">
-          <div class="download-meta">
-            Rows: <span id="download-rows">0</span> | Payload: <span id="download-bytes">-</span>
-          </div>
-          <button id="download-btn" type="button" class="btn-secondary" onclick="downloadCurrentDatasetAsCSV()">
-            Download CSV (Filtered Dataset)
-          </button>
-        </div>
-
-        <div id="results-container" class="table-container"></div>
+        <!-- Compact tables -->
+        <div id="sizeDistTable" class="table-container" style="margin-top:12px;"></div>
+        <div id="twTable" class="table-container" style="margin-top:12px;"></div>
       </div>
-    </div>
-  </div>
+      <!-- ===== /Demo 5 Overview ===== -->
+
+    </div><!-- /content -->
+  </div><!-- /container -->
 
   <script>
     const API_BASE_URL = window.location.origin;
-    let efficiencyChart = null;
-    let temperatureChart = null;
 
-    // Holds last returned dataset for CSV export
-    let lastDataset = [];
-
-    const sessionColors = [
-      'rgba(102, 126, 234, 0.8)',
-      'rgba(118, 75, 162, 0.8)',
-      'rgba(237, 100, 166, 0.8)',
-      'rgba(255, 159, 64, 0.8)',
-      'rgba(75, 192, 192, 0.8)',
-      'rgba(153, 102, 255, 0.8)',
-      'rgba(255, 99, 132, 0.8)',
-      'rgba(54, 162, 235, 0.8)',
-      'rgba(255, 206, 86, 0.8)',
-      'rgba(201, 203, 207, 0.8)'
-    ];
-
-    // -------- PERF INSTRUMENTATION --------
+    // ---- PERF INSTRUMENTATION (same pattern as your other demos) ----
     const perf = { marks: {}, measures: {}, meta: {} };
-
     function nowMs() { return performance.now(); }
     function mark(name) { perf.marks[name] = nowMs(); }
-    function measure(name, startMark, endMark) {
-      const start = perf.marks[startMark];
-      const end = perf.marks[endMark];
-      if (!Number.isFinite(start) || !Number.isFinite(end)) return;
-      perf.measures[name] = end - start;
+    function measure(name, a, b) {
+      const s = perf.marks[a], e = perf.marks[b];
+      if (Number.isFinite(s) && Number.isFinite(e)) perf.measures[name] = e - s;
     }
-
-    function resetPerf() {
-      perf.marks = {};
-      perf.measures = {};
-      perf.meta = {};
-      renderPerfPanel(); // clears panel
-    }
-
-    function fmtMs(v) {
-      if (!Number.isFinite(v)) return '-';
-      if (v < 1000) return `${v.toFixed(1)} ms`;
-      return `${(v / 1000).toFixed(2)} s`;
-    }
-
-    function approxBytesOfJson(obj) {
-      try {
-        const s = JSON.stringify(obj);
-        return new Blob([s]).size;
-      } catch {
-        return null;
-      }
-    }
-
+    function fmtMs(v) { if (!Number.isFinite(v)) return '-'; return v < 1000 ? `${v.toFixed(1)} ms` : `${(v/1000).toFixed(2)} s`; }
     function fmtBytes(bytes) {
       if (!Number.isFinite(bytes)) return '-';
-      const units = ['B','KB','MB','GB'];
-      let u = 0, b = bytes;
-      while (b >= 1024 && u < units.length - 1) { b /= 1024; u++; }
-      return `${b.toFixed(u === 0 ? 0 : 2)} ${units[u]}`;
+      const u = ['B','KB','MB','GB']; let i=0, b=bytes;
+      while (b>=1024 && i<u.length-1) { b/=1024; i++; }
+      return `${b.toFixed(i===0?0:2)} ${u[i]}`;
     }
-
+    function resetPerf() { perf.marks={}; perf.measures={}; perf.meta={}; renderPerfPanel(); }
     function renderPerfPanel() {
-      const panel = document.getElementById('perf-panel');
       const grid = document.getElementById('perf-grid');
+      const panel = document.getElementById('perf-panel');
       const note = document.getElementById('perf-note');
-
-      const rows = [];
       const m = perf.measures;
-
-      rows.push(['Options load', fmtMs(m.options_total)]);
-      rows.push(['API request (fetch)', fmtMs(m.api_fetch)]);
-      rows.push(['JSON parse', fmtMs(m.api_json)]);
-      rows.push(['Table render', fmtMs(m.table_render)]);
-      rows.push(['Chart data prep', fmtMs(m.chart_prep)]);
-      rows.push(['Chart render', fmtMs(m.chart_render)]);
-      rows.push(['Total end-to-end', fmtMs(m.total)]);
-
-      rows.push(['Rows returned', (perf.meta.rows ?? '-') + '']);
-      rows.push(['Payload size (approx)', fmtBytes(perf.meta.payloadBytes)]);
-
+      const rows = [
+        ['KPI fetch', fmtMs(m.kpi_fetch)],
+        ['SizeDist fetch', fmtMs(m.sizedist_fetch)],
+        ['TimeWindow fetch', fmtMs(m.tw_fetch)],
+        ['Total', fmtMs(m.total)]
+      ];
       grid.innerHTML = rows
         .filter(([_, v]) => v !== '-' && v !== 'null' && v !== 'undefined')
-        .map(([k, v]) => `<div><strong>${k}</strong></div><div>${v}</div>`)
-        .join('');
-
-      const items = [];
-      if (perf.meta.endpoint) items.push(`Endpoint: ${perf.meta.endpoint}`);
-      if (perf.meta.from && perf.meta.to) items.push(`Interval: ${perf.meta.from} → ${perf.meta.to}`);
-      note.textContent = items.join(' | ');
-
-      panel.style.display = (grid.innerHTML.trim().length > 0) ? 'block' : 'none';
-
-      if (Object.keys(perf.measures).length > 0) {
-        console.groupCollapsed('[PERF] Query performance');
-        console.table({
-          'Options load': m.options_total,
-          'API fetch': m.api_fetch,
-          'JSON parse': m.api_json,
-          'Table render': m.table_render,
-          'Chart prep': m.chart_prep,
-          'Chart render': m.chart_render,
-          'Total': m.total
-        });
-        console.log('[PERF meta]', perf.meta);
-        console.groupEnd();
-      }
+        .map(([k, v]) => `<div><strong>${k}</strong></div><div>${v}</div>`).join('');
+      note.textContent = perf.meta.note ?? '';
+      panel.style.display = grid.innerHTML.trim() ? 'block' : 'none';
     }
 
-    // -------- DOWNLOAD UI --------
-    function toggleDownloadBar(show) {
-      const bar = document.getElementById('download-bar');
-      if (!bar) return;
-      bar.style.display = show ? 'flex' : 'none';
+    // ---- Notifications ----
+    function showError(msg){ const el=document.getElementById('error-message'); el.textContent=msg; el.style.display='block'; document.getElementById('success-message').style.display='none'; }
+    function showSuccess(msg){ const el=document.getElementById('success-message'); el.textContent=msg; el.style.display='block'; document.getElementById('error-message').style.display='none'; }
+    function hideMessages(){ document.getElementById('error-message').style.display='none'; document.getElementById('success-message').style.display='none'; }
+
+    // ---- HTTP helpers ----
+    async function httpGet(url) {
+      const r = await fetch(url, { method: 'GET' });
+      if (!r.ok) throw new Error(`HTTP ${r.status} @ ${url}`);
+      return await r.json();
+    }
+    function approxBytesOfJson(obj){ try{ const s=JSON.stringify(obj); return new Blob([s]).size; }catch{return null;} }
+
+    // ---- Charts ----
+    let sizeDistChart = null;
+    let twChart = null;
+
+    // Data caches (for CSV downloads)
+    let cacheSizeDist = [];
+    let cacheTw = [];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadDemo5Overview().catch(err => { console.error(err); showError(err.message || 'Failed to load'); });
+      // Wire CSV buttons
+      document.getElementById('btn-download-sizeDist')?.addEventListener('click', () => downloadCSV(cacheSizeDist, 'demo5_routes_by_size_distribution.csv'));
+      document.getElementById('btn-download-tw')?.addEventListener('click', () => downloadCSV(cacheTw, 'demo5_routes_by_timewindow.csv'));
+    });
+
+    async function loadDemo5Overview() {
+      resetPerf(); hideMessages();
+      mark('total_start');
+
+      // KPIs
+      mark('kpi_fetch_start');
+      const kpis = await httpGet(`${API_BASE_URL}/api/demo5/kpis`);
+      mark('kpi_fetch_end'); measure('kpi_fetch', 'kpi_fetch_start','kpi_fetch_end');
+      renderKpis(kpis);
+
+      // Size & Distribution
+      mark('sizedist_fetch_start');
+      const sizeDist = await httpGet(`${API_BASE_URL}/api/demo5/route-mix/size-distribution`);
+      mark('sizedist_fetch_end'); measure('sizedist_fetch', 'sizedist_fetch_start','sizedist_fetch_end');
+      cacheSizeDist = Array.isArray(sizeDist) ? sizeDist : [];
+      renderSizeDistribution(cacheSizeDist);
+
+      // Time Window
+      mark('tw_fetch_start');
+      const twMix = await httpGet(`${API_BASE_URL}/api/demo5/route-mix/time-window`);
+      mark('tw_fetch_end'); measure('tw_fetch', 'tw_fetch_start','tw_fetch_end');
+      cacheTw = Array.isArray(twMix) ? twMix : [];
+      renderTimeWindowMix(cacheTw);
+
+      perf.meta.note = 'Overview fetched from /api/demo5/*';
+      mark('total_end'); measure('total','total_start','total_end');
+      renderPerfPanel();
+      showSuccess('Demo 5 overview loaded.');
     }
 
-    function updateDownloadMeta(rows, bytes) {
-      const r = document.getElementById('download-rows');
-      const b = document.getElementById('download-bytes');
-      if (r) r.textContent = (rows ?? 0) + '';
-      if (b) b.textContent = fmtBytes(bytes);
+    function renderKpis(k) {
+      const set = (id, v)=>{ const el=document.getElementById(id); if (el) el.textContent = v ?? '-'; };
+      set('kpi-routes', k?.routes ?? '-');
+      set('kpi-nodes', k?.nodes ?? '-');
+      set('kpi-customers', k?.customers ?? '-');
+      set('kpi-cs', k?.chargingStations ?? '-');
+      set('kpi-depots', k?.depots ?? '-');
     }
 
-    function downloadCurrentDatasetAsCSV() {
-      if (!Array.isArray(lastDataset) || lastDataset.length === 0) {
-        showError('No dataset available to download.');
-        return;
-      }
+    function renderSizeDistribution(rows) {
+      // rows: [{size:int, distribution:"R|C|RC", routes:int}]
+      const labels = buildSizeDistLabels(rows); // e.g., ["5-R","5-C","5-RC","10-R",...]
+      const data = labels.map(lbl => {
+        const [sizeStr, dist] = lbl.split('-');
+        const size = parseInt(sizeStr, 10);
+        const hit = rows.find(r => r.size === size && r.distribution === dist);
+        return hit ? hit.routes : 0;
+      });
 
-      // Collect all keys across rows (stable column set)
+      const bytes = approxBytesOfJson(rows);
+      const meta = document.getElementById('sizeDist-meta');
+      if (meta) meta.textContent = `Rows: ${rows.length}, Payload: ${fmtBytes(bytes)}`;
+
+      const ctx = document.getElementById('sizeDistChart').getContext('2d');
+      if (sizeDistChart) sizeDistChart.destroy();
+      sizeDistChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Routes', data, backgroundColor: 'rgba(54, 162, 235, 0.6)' }] },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: true, position: 'top' } },
+          scales: {
+            x: { title: { display: true, text: 'Size-Distribution' } },
+            y: { beginAtZero: true, title: { display: true, text: 'Routes' } }
+          }
+        }
+      });
+
+      // compact table
+      const html =
+        `<table><thead><tr><th>Size</th><th>Distribution</th><th>Routes</th></tr></thead>
+         <tbody>${rows.map(r=>`<tr><td>${r.size}</td><td>${r.distribution}</td><td>${r.routes}</td></tr>`).join('')}</tbody></table>`;
+      const host = document.getElementById('sizeDistTable');
+      if (host) host.innerHTML = html;
+    }
+    function buildSizeDistLabels(rows) {
+      const sizes = Array.from(new Set(rows.map(r => r.size))).sort((a,b)=>a-b);
+      const dists = ['R','C','RC'];
+      const out = [];
+      sizes.forEach(s => dists.forEach(d => out.push(`${s}-${d}`)));
+      return out;
+    }
+
+    function renderTimeWindowMix(rows) {
+      // rows: [{tw:int(1|2|3), routes:int}]
+      const labelOf = tw => ({1:'Wide', 2:'Medium', 3:'Narrow'}[tw] || String(tw));
+      const labels = rows.map(x => labelOf(x.tw));
+      const data = rows.map(x => x.routes);
+
+      const bytes = approxBytesOfJson(rows);
+      const meta = document.getElementById('tw-meta');
+      if (meta) meta.textContent = `Rows: ${rows.length}, Payload: ${fmtBytes(bytes)}`;
+
+      const ctx = document.getElementById('twChart').getContext('2d');
+      if (twChart) twChart.destroy();
+      twChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Routes', data, backgroundColor: 'rgba(255, 159, 64, 0.6)' }] },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: true, position: 'top' } },
+          scales: {
+            x: { title: { display: true, text: 'Time Window' } },
+            y: { beginAtZero: true, title: { display: true, text: 'Routes' } }
+          }
+        }
+      });
+
+      // compact table
+      const html =
+        `<table><thead><tr><th>Time Window</th><th>Routes</th></tr></thead>
+         <tbody>${rows.map(r=>`<tr><td>${labelOf(r.tw)}</td><td>${r.routes}</td></tr>`).join('')}</tbody></table>`;
+      const host = document.getElementById('twTable');
+      if (host) host.innerHTML = html;
+    }
+
+    // ---- CSV helpers ----
+    function downloadCSV(data, filename) {
+      if (!Array.isArray(data) || data.length === 0) { showError('No data to download.'); return; }
       const keys = Array.from(
-        lastDataset.reduce((set, row) => {
-          Object.keys(row || {}).forEach(k => set.add(k));
-          return set;
-        }, new Set())
+        data.reduce((set, row)=>{ Object.keys(row||{}).forEach(k=>set.add(k)); return set; }, new Set())
       ).sort();
 
-      // CSV escape
-      const esc = (v) => {
-        const s = (v == null) ? '' : String(v);
-        const cleaned = cleanValue(s);
-        const needsQuotes = /[",\n\r]/.test(cleaned);
-        const q = cleaned.replace(/"/g, '""');
+      const esc = v => {
+        const s = v==null ? '' : String(v);
+        const needsQuotes = s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r');
+        const q = s.replace(/"/g,'""');
         return needsQuotes ? `"${q}"` : q;
       };
 
       const header = keys.map(esc).join(',');
-      const lines = lastDataset.map(row => keys.map(k => esc(row?.[k])).join(','));
+      const lines = data.map(row => keys.map(k => esc(row?.[k])).join(','));
       const csv = [header, ...lines].join('\r\n');
 
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-
-      // Filename based on current filters (best-effort)
-      const from = document.getElementById('from-time')?.value || 'from';
-      const to = document.getElementById('to-time')?.value || 'to';
-      const dist = document.getElementById('distance-mm')?.value || 'allDist';
-      const soc = document.getElementById('soc-percent')?.value || 'allSoc';
-      const safe = (s) => String(s).replace(/[:]/g, '-').replace(/[^\w\-T]/g, '_');
-      const filename = `opeva_filtered_${safe(from)}_${safe(to)}_dist-${safe(dist)}_soc-${safe(soc)}.csv`;
-
-      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
+      a.href = URL.createObjectURL(blob);
+      a.download = filename || 'export.csv';
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    // Load filter options on page load
-    window.addEventListener('DOMContentLoaded', () => {
-      loadFilterOptions();
-    });
-
-    async function loadFilterOptions() {
-      resetPerf();
-      mark('options_start');
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/filter-options`);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const data = await response.json();
-
-        document.getElementById('options-info').innerHTML = `
-          <p><strong>Available ranges:</strong></p>
-          <p>Time: ${data.minTime ? new Date(data.minTime).toLocaleString() : 'N/A'} to ${data.maxTime ? new Date(data.maxTime).toLocaleString() : 'N/A'}</p>
-          <p>Distance options: ${data.distanceMmOptions ? data.distanceMmOptions.length : 0}</p>
-          <p>SOC options: ${data.socPercentOptions ? data.socPercentOptions.length : 0}</p>
-        `;
-
-        const distanceSelect = document.getElementById('distance-mm');
-        distanceSelect.innerHTML = '<option value="">All distances</option>';
-        (data.distanceMmOptions || []).forEach(distance => {
-          const option = document.createElement('option');
-          option.value = distance;
-          option.textContent = `${distance} mm`;
-          distanceSelect.appendChild(option);
-        });
-
-        const socSelect = document.getElementById('soc-percent');
-        socSelect.innerHTML = '<option value="">All SOC values</option>';
-        (data.socPercentOptions || []).forEach(soc => {
-          const option = document.createElement('option');
-          option.value = soc;
-          option.textContent = `${soc}%`;
-          socSelect.appendChild(option);
-        });
-
-        if (data.minTime && !document.getElementById('from-time').value) {
-          document.getElementById('from-time').value = formatDateTimeLocal(data.minTime);
-        }
-        if (data.maxTime && !document.getElementById('to-time').value) {
-          document.getElementById('to-time').value = formatDateTimeLocal(data.maxTime);
-        }
-
-        showSuccess('Filter options loaded successfully');
-      } catch (error) {
-        showError('Failed to load filter options: ' + error.message);
-        console.error('Error loading filter options:', error);
-      } finally {
-        mark('options_end');
-        measure('options_total', 'options_start', 'options_end');
-        renderPerfPanel();
-      }
-    }
-
-    function formatDateTimeLocal(dateTimeString) {
-      const date = new Date(dateTimeString);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${year}-${month}-${day}T${hours}:${minutes}`;
-    }
-
-    function formatDateTimeForAPI(datetimeLocalValue) {
-      return datetimeLocalValue + ':00';
-    }
-
-    async function queryByTimeInterval() {
-      const from = document.getElementById('from-time').value;
-      const to = document.getElementById('to-time').value;
-      if (!from || !to) { showError('Please provide both From Time and To Time'); return; }
-
-      const requestBody = { from: formatDateTimeForAPI(from), to: formatDateTimeForAPI(to) };
-      await executeQuery('/api/query/time-interval', requestBody, { from, to });
-    }
-
-    async function queryFiltered() {
-      const from = document.getElementById('from-time').value;
-      const to = document.getElementById('to-time').value;
-      const distanceMm = document.getElementById('distance-mm').value;
-      const socPercent = document.getElementById('soc-percent').value;
-      if (!from || !to) { showError('Please provide both From Time and To Time'); return; }
-
-      const requestBody = {
-        from: formatDateTimeForAPI(from),
-        to: formatDateTimeForAPI(to),
-        distanceMm: distanceMm ? parseFloat(distanceMm) : null,
-        socPercent: socPercent ? parseFloat(socPercent) : null
-      };
-
-      await executeQuery('/api/query/filtered', requestBody, { from, to });
-    }
-
-    async function executeQuery(endpoint, requestBody, meta = {}) {
-      resetPerf();
-      perf.meta.endpoint = endpoint;
-      perf.meta.from = meta.from || null;
-      perf.meta.to = meta.to || null;
-
-      // Reset dataset + download bar each query
-      lastDataset = [];
-      toggleDownloadBar(false);
-      updateDownloadMeta(0, null);
-
-      const loadingDiv = document.getElementById('loading');
-      const resultsContainer = document.getElementById('results-container');
-      const resultsCount = document.getElementById('results-count');
-
-      try {
-        mark('total_start');
-
-        loadingDiv.style.display = 'block';
-        resultsContainer.innerHTML = '';
-        resultsCount.textContent = '';
-        hideMessages();
-
-        // --- API fetch timing ---
-        mark('api_fetch_start');
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody)
-        });
-        mark('api_fetch_end');
-        measure('api_fetch', 'api_fetch_start', 'api_fetch_end');
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-        }
-
-        // --- JSON parse timing ---
-        mark('api_json_start');
-        const data = await response.json();
-        mark('api_json_end');
-        measure('api_json', 'api_json_start', 'api_json_end');
-
-        // Meta: dataset size
-        perf.meta.rows = Array.isArray(data) ? data.length : 0;
-        perf.meta.payloadBytes = approxBytesOfJson(data);
-
-        if (Array.isArray(data) && data.length > 0) {
-          // Store for download
-          lastDataset = data;
-          toggleDownloadBar(true);
-          updateDownloadMeta(perf.meta.rows, perf.meta.payloadBytes);
-
-          // Table render timing
-          mark('table_start');
-          displayResults(data);
-          mark('table_end');
-          measure('table_render', 'table_start', 'table_end');
-
-          // Chart timing: data prep + render separated
-          mark('chart_prep_start');
-          const sessionGroups = groupBySession(data);
-          mark('chart_prep_end');
-          measure('chart_prep', 'chart_prep_start', 'chart_prep_end');
-
-          mark('chart_render_start');
-          generateEfficiencyChart(sessionGroups);
-          generateTemperatureChart(sessionGroups);
-          document.getElementById('charts-section').style.display = 'block';
-          mark('chart_render_end');
-          measure('chart_render', 'chart_render_start', 'chart_render_end');
-
-          resultsCount.textContent = `${data.length} result(s) found`;
-          showSuccess(`Query executed successfully. Found ${data.length} result(s).`);
-        } else {
-          lastDataset = [];
-          toggleDownloadBar(false);
-          updateDownloadMeta(0, perf.meta.payloadBytes);
-
-          resultsContainer.innerHTML = '<p style="padding:20px; text-align:center; color:#666;">No results found for the given criteria.</p>';
-          resultsCount.textContent = '0 results';
-          document.getElementById('charts-section').style.display = 'none';
-          if (efficiencyChart) efficiencyChart.destroy();
-          if (temperatureChart) temperatureChart.destroy();
-          showSuccess('Query executed successfully, but no results found.');
-        }
-      } catch (error) {
-        showError('Query failed: ' + error.message);
-        resultsContainer.innerHTML = '';
-        resultsCount.textContent = '';
-        console.error('Error executing query:', error);
-
-        lastDataset = [];
-        toggleDownloadBar(false);
-        updateDownloadMeta(0, null);
-      } finally {
-        loadingDiv.style.display = 'none';
-
-        mark('total_end');
-        measure('total', 'total_start', 'total_end');
-
-        renderPerfPanel();
-      }
-    }
-
-    function groupBySession(results) {
-      const sessionGroups = {};
-      results.forEach((r, idx) => {
-        const session = r.session || `session_${idx}`;
-        if (!sessionGroups[session]) sessionGroups[session] = [];
-        sessionGroups[session].push(r);
-      });
-      return sessionGroups;
-    }
-
-    function displayResults(results) {
-      if (!results || results.length === 0) return;
-
-      const allKeys = new Set();
-      results.forEach(r => Object.keys(r).forEach(k => allKeys.add(k)));
-      const keys = Array.from(allKeys).sort();
-
-      let html = '<table><thead><tr>';
-      keys.forEach(k => { html += `<th>${k}</th>`; });
-      html += '</tr></thead><tbody>';
-
-      results.forEach(r => {
-        html += '<tr>';
-        keys.forEach(k => {
-          const value = r[k] ?? '';
-          const clean = cleanValue(value);
-          html += `<td>${escapeHtml(clean)}</td>`;
-        });
-        html += '</tr>';
-      });
-
-      html += '</tbody></table>';
-      document.getElementById('results-container').innerHTML = html;
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    function clearForm() {
-      document.getElementById('query-form').reset();
-      document.getElementById('results-container').innerHTML = '';
-      document.getElementById('results-count').textContent = '';
-      document.getElementById('charts-section').style.display = 'none';
-      if (efficiencyChart) { efficiencyChart.destroy(); efficiencyChart = null; }
-      if (temperatureChart) { temperatureChart.destroy(); temperatureChart = null; }
-      hideMessages();
-      resetPerf();
-
-      lastDataset = [];
-      toggleDownloadBar(false);
-      updateDownloadMeta(0, null);
-    }
-
-    // ---------- CHARTS ----------
-
-    function generateEfficiencyChart(sessionGroups) {
-      const canvas = document.getElementById('efficiencyChart');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-
-      if (efficiencyChart) efficiencyChart.destroy();
-
-      const datasets = [];
-      const sessionKeys = Object.keys(sessionGroups);
-      const allPowers = [];
-
-      sessionKeys.forEach((sessionKey, sessionIndex) => {
-        const sessionData = sessionGroups[sessionKey];
-        const color = sessionColors[sessionIndex % sessionColors.length];
-
-        const points = sessionData
-          .map(r => {
-            const power = calculatePower(r);
-            const effRaw = parseFloat(cleanValue(r.efficiency));
-            const effPct = effRaw * 100;
-            const time = parseTime(r.tNorm || r.timestamp);
-            return { x: power, y: effPct, time, power };
-          })
-          .filter(p => Number.isFinite(p.x) && p.x > 0 && Number.isFinite(p.y) && p.y >= 0 && p.y <= 100)
-          .sort((a, b) => a.x - b.x);
-
-        points.forEach(p => allPowers.push(p.x));
-
-        if (points.length > 0) {
-          datasets.push({
-            label: `Session ${sessionIndex + 1} - Efficiency`,
-            data: points,
-            borderColor: color,
-            backgroundColor: color.replace('0.8', '0.2'),
-            borderWidth: 2,
-            fill: false,
-            tension: 0.4,
-            cubicInterpolationMode: 'monotone',
-            pointRadius: 0,
-            pointHoverRadius: 4
-          });
-        }
-      });
-
-      const { min: xMin, max: xMax } = computeAxisRange(allPowers, 100);
-
-      efficiencyChart = new Chart(ctx, {
-        type: 'line',
-        data: { datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          interaction: { intersect: false, mode: 'index' },
-          plugins: {
-            title: { display: true, text: 'Efficiency vs Power', font: { size: 16, weight: 'bold' } },
-            legend: { display: true, position: 'top' },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  const label = context.dataset.label || '';
-                  const eff = Number.isFinite(context.parsed.y) ? context.parsed.y.toFixed(2) : 'N/A';
-                  const pwr = Number.isFinite(context.parsed.x) ? context.parsed.x.toFixed(2) : 'N/A';
-                  const time = context.raw && context.raw.time ? new Date(context.raw.time).toLocaleString() : 'N/A';
-                  return `${label}: ${eff}% | Power: ${pwr} W | Time: ${time}`;
-                }
-              }
-            }
-          },
-          scales: {
-            x: {
-              type: 'linear',
-              title: { display: true, text: 'Power (W)' },
-              beginAtZero: false,
-              min: xMin,
-              max: xMax
-            },
-            y: {
-              title: { display: true, text: 'Efficiency (%)' },
-              beginAtZero: true,
-              max: 100
-            }
-          }
-        }
-      });
-    }
-
-    function generateTemperatureChart(sessionGroups) {
-      const canvas = document.getElementById('temperatureChart');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-
-      if (temperatureChart) temperatureChart.destroy();
-
-      const coilDatasets = [];
-      const ambientDatasets = [];
-      const sessionKeys = Object.keys(sessionGroups);
-      const allPowers = [];
-
-      sessionKeys.forEach((sessionKey, sessionIndex) => {
-        const sessionData = sessionGroups[sessionKey];
-        const baseColor = sessionColors[sessionIndex % sessionColors.length];
-
-        const coilPoints = [];
-        const ambientPoints = [];
-
-        sessionData.forEach(r => {
-          const power = calculatePower(r);
-          const coilTemp = parseFloat(cleanValue(r.t_coil_c || r.tCoilC));
-          const ambientTemp = parseFloat(cleanValue(r.t_ambiant_c || r.tAmbiantC || r.t_ambiantC));
-
-          if (Number.isFinite(power) && power > 0) {
-            allPowers.push(power);
-            if (Number.isFinite(coilTemp)) coilPoints.push({ x: power, y: coilTemp });
-            if (Number.isFinite(ambientTemp)) ambientPoints.push({ x: power, y: ambientTemp });
-          }
-        });
-
-        coilPoints.sort((a, b) => a.x - b.x);
-        ambientPoints.sort((a, b) => a.x - b.x);
-
-        if (coilPoints.length > 0) {
-          const coilColor = baseColor.replace('0.8', '0.7');
-          coilDatasets.push({
-            label: `Session ${sessionIndex + 1} - Coil Temp`,
-            data: coilPoints,
-            borderColor: coilColor,
-            backgroundColor: coilColor.replace('0.7', '0.2'),
-            borderWidth: 2,
-            fill: false,
-            tension: 0.4,
-            cubicInterpolationMode: 'monotone',
-            pointRadius: 0,
-            pointHoverRadius: 4
-          });
-        }
-
-        if (ambientPoints.length > 0) {
-          const ambientColor = baseColor.replace('0.8', '0.5');
-          ambientDatasets.push({
-            label: `Session ${sessionIndex + 1} - Ambient Temp`,
-            data: ambientPoints,
-            borderColor: ambientColor,
-            backgroundColor: ambientColor.replace('0.5', '0.15'),
-            borderWidth: 2,
-            borderDash: [5, 5],
-            fill: false,
-            tension: 0.4,
-            cubicInterpolationMode: 'monotone',
-            pointRadius: 0,
-            pointHoverRadius: 4
-          });
-        }
-      });
-
-      const allDatasets = [...coilDatasets, ...ambientDatasets];
-      const { min: xMin, max: xMax } = computeAxisRange(allPowers, 100);
-
-      temperatureChart = new Chart(ctx, {
-        type: 'line',
-        data: { datasets: allDatasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          interaction: { intersect: false, mode: 'index' },
-          plugins: {
-            title: { display: true, text: 'Temperatures vs Power', font: { size: 16, weight: 'bold' } },
-            legend: { display: true, position: 'top' }
-          },
-          scales: {
-            x: {
-              type: 'linear',
-              title: { display: true, text: 'Power (W)' },
-              beginAtZero: false,
-              min: xMin,
-              max: xMax
-            },
-            y: {
-              title: { display: true, text: 'Temperature (°C)' },
-              beginAtZero: false
-            }
-          }
-        }
-      });
-    }
-
-    // ---------- HELPERS ----------
-
-    function computeAxisRange(values, pad) {
-      const finite = (values || []).filter(v => Number.isFinite(v));
-      if (finite.length === 0) return { min: 0, max: 1 };
-      let min = Math.min(...finite);
-      let max = Math.max(...finite);
-      min = min - pad;
-      max = max + pad;
-      if (min === max) { min -= pad; max += pad; }
-      return { min, max };
-    }
-
-    function parseTime(timeStr) {
-      if (!timeStr) return new Date();
-      const cleaned = cleanValue(timeStr);
-      const normalized = cleaned.replace(' ', 'T');
-      return new Date(normalized);
-    }
-
-    function calculatePower(result) {
-      const pPri = parseFloat(cleanValue(result.p_pri || result.pPri || ''));
-      if (Number.isFinite(pPri) && pPri > 0) return pPri;
-
-      const pSin = parseFloat(cleanValue(result.p_sin || result.pSin || ''));
-      if (Number.isFinite(pSin) && pSin > 0) return pSin;
-
-      const vPri = parseFloat(cleanValue(result.v_pri_v || result.vPriV || result.v_priV || ''));
-      const aPri = parseFloat(cleanValue(result.a_pri_a || result.aPriA || result.a_priA || ''));
-      if (Number.isFinite(vPri) && Number.isFinite(aPri) && vPri > 0 && aPri > 0) return vPri * aPri;
-
-      const vSin = parseFloat(cleanValue(result.v_sin_v || result.vSinV || result.v_sinV || ''));
-      const aSin = parseFloat(cleanValue(result.a_sin_a || result.aSinA || result.a_sinA || ''));
-      if (Number.isFinite(vSin) && Number.isFinite(aSin) && vSin > 0 && aSin > 0) return vSin * aSin;
-
-      return 0;
-    }
-
-    function cleanValue(value) {
-      if (value == null) return '';
-      const str = String(value);
-      return str.replace(/^"|"(@|\^\^).*$/g, '').replace(/"/g, '').trim();
-    }
-
-    function showError(message) {
-      const errorDiv = document.getElementById('error-message');
-      errorDiv.textContent = message;
-      errorDiv.style.display = 'block';
-      document.getElementById('success-message').style.display = 'none';
-    }
-
-    function showSuccess(message) {
-      const successDiv = document.getElementById('success-message');
-      successDiv.textContent = message;
-      successDiv.style.display = 'block';
-      document.getElementById('error-message').style.display = 'none';
-    }
-
-    function hideMessages() {
-      document.getElementById('error-message').style.display = 'none';
-      document.getElementById('success-message').style.display = 'none';
     }
   </script>
 </body>

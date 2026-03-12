@@ -25,6 +25,7 @@ public class CustomSPARQL {
 	);
 
     public static Object sparqlQueryExecution(String query) {
+		System.out.println("Received SPARQL query:\n" + query);
 		List<Map<String, String>> queryResponse = new ArrayList<Map<String, String>>();
 		String sparql = "PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\r\n" + 
 				"PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\r\n" + 
@@ -38,7 +39,6 @@ public class CustomSPARQL {
 				query;
 		//System.out.println(sparql);
 		VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create(sparql, graph);
-		
 		ResultSet results = vqe.execSelect();
 		
 		while(results.hasNext()) {

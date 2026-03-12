@@ -6,6 +6,9 @@ import java.util.Map;
 import com.erarge.opevaontology.dto.FilterOptionsResponse;
 import com.erarge.opevaontology.dto.FilteredQueryRequest;
 import com.erarge.opevaontology.dto.TimeIntervalQueryRequest;
+import com.erarge.opevaontology.dto.demo5.KpisResponse;
+import com.erarge.opevaontology.dto.demo5.RouteSizeDistributionDTO;
+import com.erarge.opevaontology.dto.demo5.RouteTimeWindowDTO;
 
 public interface IService {
     public Object sparql(String query);
@@ -17,4 +20,10 @@ public interface IService {
     public List<Map<String, String>> queryFiltered(FilteredQueryRequest request);
     
     public FilterOptionsResponse getFilterOptions();
+
+    
+    KpisResponse getKpis();
+    List<RouteSizeDistributionDTO> getRouteMixSizeDistribution();
+    List<RouteTimeWindowDTO> getRouteMixTimeWindow();
+
 }

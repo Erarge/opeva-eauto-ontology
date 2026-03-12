@@ -3,6 +3,7 @@ package com.erarge.opevaontology.service.impl;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -12,12 +13,20 @@ import org.springframework.stereotype.Service;
 import com.erarge.opevaontology.dto.FilterOptionsResponse;
 import com.erarge.opevaontology.dto.FilteredQueryRequest;
 import com.erarge.opevaontology.dto.TimeIntervalQueryRequest;
+import com.erarge.opevaontology.dto.demo5.KpisResponse;
+import com.erarge.opevaontology.dto.demo5.RouteSizeDistributionDTO;
+import com.erarge.opevaontology.dto.demo5.RouteTimeWindowDTO;
 import com.erarge.opevaontology.repository.CustomSPARQL;
 import com.erarge.opevaontology.repository.CustomSPARQLDemo5;
 import com.erarge.opevaontology.service.IService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class ServiceImpl implements IService {
+
+    
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     // Your API DTOs currently use LocalDateTime; we will parse offset-aware values and convert.
     private static final DateTimeFormatter ISO_OFFSET_OR_LOCAL = DateTimeFormatter.ISO_DATE_TIME;
@@ -165,4 +174,74 @@ public class ServiceImpl implements IService {
             return null;
         }
     }
+
+    
+    @Override
+    public KpisResponse getKpis() {
+        String sparql = QueryBuilderDemo5.buildKpisQuery();
+        Object raw = CustomSPARQLDemo5.sparqlQueryExecution(sparql); // your call
+        JsonNode root = toJson(raw);
+        long routes = 0, nodes = 0, customers = 0, cs = 0, depots = 0;
+        JsonNode b = root.get(0);
+        routes = b.get("routes").asLong();
+        nodes = b.get("nodes").asLong();
+        customers = b.get("customers").asLong();
+        cs = b.get("chargingStations").asLong();
+        depots = b.get("depots").asLong();
+        return new KpisResponse(routes, nodes, customers, cs, depots);
+    }
+
+    @Override
+    public List<RouteSizeDistributionDTO> getRouteMixSizeDistribution() {
+        String sparql = QueryBuilderDemo5.buildRouteMixSizeDistributionQuery();
+        Object raw = CustomSPARQLDemo5.sparqlQueryExecution(sparql);
+        JsonNode root = toJson(raw);
+        JsonNode bindings = getBindings(root);
+        List<RouteSizeDistributionDTO> out = new ArrayList<>();
+        if (root.isArray()) {
+            for (JsonNode b : root) {
+                int size = b.get("size").asInt();
+                String distribution = b.get("distribution").asText();
+                long routes = b.get("routes").asLong();
+                out.add(new RouteSizeDistributionDTO(size, distribution, routes));
+            }
+        }
+        return out;
+    }
+
+    @Override
+    public List<RouteTimeWindowDTO> getRouteMixTimeWindow() {
+        String sparql = QueryBuilderDemo5.buildRouteMixTimeWindowQuery();
+        Object raw = CustomSPARQLDemo5.sparqlQueryExecution(sparql);
+        JsonNode root = toJson(raw);
+        JsonNode bindings = getBindings(root);
+        List<RouteTimeWindowDTO> out = new ArrayList<>();
+        if (root.isArray()) {
+            for (JsonNode b : root) {
+                int tw = b.get("tw").asInt();
+                long routes = b.get("routes").asLong();
+                out.add(new RouteTimeWindowDTO(tw, routes));
+            }
+        }
+        return out;
+    }
+
+    // ---------- helpers for SPARQL-JSON ----------
+    private static JsonNode toJson(Object raw) {
+        return MAPPER.valueToTree(raw);
+    }
+    private static JsonNode getBindings(JsonNode root) {
+        JsonNode results = root.path(0);
+        return results.path("bindings");
+    }
+    private static String asString(JsonNode binding, String var) {
+        JsonNode v = binding.path(var).path("value");
+        return v.isMissingNode() ? null : v.asText();
+    }
+    private static long asLong(JsonNode binding, String var) {
+        String s = asString(binding, var);
+        if (s == null || s.isEmpty()) return 0L;
+        try { return Math.round(Double.parseDouble(s)); } catch (Exception ignore) { return 0L; }
+    }
+
 }
