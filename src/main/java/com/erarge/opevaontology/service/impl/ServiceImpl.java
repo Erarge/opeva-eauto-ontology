@@ -4,13 +4,20 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import com.erarge.opevaontology.dto.FilterOptionsResponse;
+import com.erarge.opevaontology.dto.demo3.Demo3DatasetResponse;
+import com.erarge.opevaontology.dto.demo3.Demo3EisPointDTO;
+import com.erarge.opevaontology.dto.demo3.Demo3FilterOptionsResponse;
+import com.erarge.opevaontology.dto.demo3.Demo3SummaryResponse;
 import com.erarge.opevaontology.dto.FilteredQueryRequest;
 import com.erarge.opevaontology.dto.TimeIntervalQueryRequest;
 import com.erarge.opevaontology.dto.demo5.KpisResponse;
@@ -176,6 +183,95 @@ public class ServiceImpl implements IService {
     }
 
     
+    @Override
+    @SuppressWarnings("unchecked")
+    public Demo3FilterOptionsResponse getDemo3FilterOptions(String battery) {
+        Object batteryRaw = CustomSPARQL.sparqlQueryExecution(QueryBuilderDemo3.buildBatteryOptionsQuery());
+        List<Map<String, String>> batteryRows = (List<Map<String, String>>) batteryRaw;
+        List<String> batteries = batteryRows.stream()
+            .map(row -> row.get("battery"))
+            .filter(value -> value != null && !value.isBlank())
+            .distinct()
+            .sorted()
+            .collect(Collectors.toList());
+
+        Object socRaw = CustomSPARQL.sparqlQueryExecution(QueryBuilderDemo3.buildSocOptionsQuery(battery));
+        List<Map<String, String>> socRows = (List<Map<String, String>>) socRaw;
+        List<Double> socValues = socRows.stream()
+            .map(row -> row.get("soc"))
+            .map(ServiceImpl::tryParseDouble)
+            .filter(value -> value != null)
+            .distinct()
+            .sorted()
+            .collect(Collectors.toList());
+
+        return new Demo3FilterOptionsResponse(batteries, socValues);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Demo3DatasetResponse getDemo3Dataset(String battery, Double soc) {
+        Object raw = CustomSPARQL.sparqlQueryExecution(QueryBuilderDemo3.buildEisDatasetQuery(battery, soc));
+        List<Map<String, String>> rows = (List<Map<String, String>>) raw;
+
+        List<Demo3EisPointDTO> points = rows.stream()
+            .map(this::mapDemo3Point)
+            .filter(point -> point != null)
+            .sorted(Comparator
+                .comparing(Demo3EisPointDTO::getBattery)
+                .thenComparingDouble(Demo3EisPointDTO::getSoc)
+                .thenComparingDouble(Demo3EisPointDTO::getFrequency))
+            .collect(Collectors.toList());
+
+        Set<String> batteries = new LinkedHashSet<>();
+        Set<Double> socValues = new LinkedHashSet<>();
+        Double minFrequency = null;
+        Double maxFrequency = null;
+        Double maxImpedanceMagnitude = null;
+        double phaseSum = 0.0;
+
+        for (Demo3EisPointDTO point : points) {
+            batteries.add(point.getBattery());
+            socValues.add(point.getSoc());
+
+            if (minFrequency == null || point.getFrequency() < minFrequency) minFrequency = point.getFrequency();
+            if (maxFrequency == null || point.getFrequency() > maxFrequency) maxFrequency = point.getFrequency();
+            if (maxImpedanceMagnitude == null || point.getImpedanceMagnitude() > maxImpedanceMagnitude) {
+                maxImpedanceMagnitude = point.getImpedanceMagnitude();
+            }
+            phaseSum += point.getImpedancePhase();
+        }
+
+        Double averagePhase = points.isEmpty() ? null : phaseSum / points.size();
+        Demo3SummaryResponse summary = new Demo3SummaryResponse(
+            batteries.size(),
+            socValues.size(),
+            points.size(),
+            minFrequency,
+            maxFrequency,
+            maxImpedanceMagnitude,
+            averagePhase
+        );
+
+        return new Demo3DatasetResponse(summary, points);
+    }
+
+    private Demo3EisPointDTO mapDemo3Point(Map<String, String> row) {
+        String battery = row.get("battery");
+        Double soc = tryParseDouble(row.get("soc"));
+        Double frequency = tryParseDouble(row.get("f"));
+        Double re = tryParseDouble(row.get("re"));
+        Double im = tryParseDouble(row.get("im"));
+        Double zMag = tryParseDouble(row.get("zMag"));
+        Double zPhase = tryParseDouble(row.get("zPhase"));
+
+        if (battery == null || soc == null || frequency == null || re == null || im == null || zMag == null || zPhase == null) {
+            return null;
+        }
+
+        return new Demo3EisPointDTO(battery, soc, frequency, re, im, zMag, zPhase);
+    }
+
     @Override
     public KpisResponse getKpis() {
         String sparql = QueryBuilderDemo5.buildKpisQuery();

@@ -6,6 +6,8 @@ import java.util.Map;
 import com.erarge.opevaontology.dto.FilterOptionsResponse;
 import com.erarge.opevaontology.dto.FilteredQueryRequest;
 import com.erarge.opevaontology.dto.TimeIntervalQueryRequest;
+import com.erarge.opevaontology.dto.demo3.Demo3DatasetResponse;
+import com.erarge.opevaontology.dto.demo3.Demo3FilterOptionsResponse;
 import com.erarge.opevaontology.dto.demo5.KpisResponse;
 import com.erarge.opevaontology.dto.demo5.RouteSizeDistributionDTO;
 import com.erarge.opevaontology.dto.demo5.RouteTimeWindowDTO;
@@ -21,7 +23,10 @@ public interface IService {
     
     public FilterOptionsResponse getFilterOptions();
 
-    
+    Demo3FilterOptionsResponse getDemo3FilterOptions(String battery);
+
+    Demo3DatasetResponse getDemo3Dataset(String battery, Double soc);
+
     KpisResponse getKpis();
     List<RouteSizeDistributionDTO> getRouteMixSizeDistribution();
     List<RouteTimeWindowDTO> getRouteMixTimeWindow();

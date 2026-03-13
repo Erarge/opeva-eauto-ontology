@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.erarge.opevaontology.dto.FilterOptionsResponse;
 import com.erarge.opevaontology.dto.FilteredQueryRequest;
 import com.erarge.opevaontology.dto.TimeIntervalQueryRequest;
+import com.erarge.opevaontology.dto.demo3.Demo3DatasetResponse;
+import com.erarge.opevaontology.dto.demo3.Demo3FilterOptionsResponse;
 import com.erarge.opevaontology.dto.demo5.KpisResponse;
 import com.erarge.opevaontology.dto.demo5.RouteSizeDistributionDTO;
 import com.erarge.opevaontology.dto.demo5.RouteTimeWindowDTO;
@@ -52,8 +55,20 @@ public class APIController {
 		return service.queryFiltered(request);
 	}
 
-	
-@GetMapping("/api/demo5/kpis")
+	@GetMapping("/api/demo3/filter-options")
+	public ResponseEntity<Demo3FilterOptionsResponse> getDemo3FilterOptions(
+			@RequestParam(required = false) String battery) {
+		return ResponseEntity.ok(service.getDemo3FilterOptions(battery));
+	}
+
+	@GetMapping("/api/demo3/eis")
+	public ResponseEntity<Demo3DatasetResponse> getDemo3Dataset(
+			@RequestParam(required = false) String battery,
+			@RequestParam(required = false) Double soc) {
+		return ResponseEntity.ok(service.getDemo3Dataset(battery, soc));
+	}
+
+	@GetMapping("/api/demo5/kpis")
     public ResponseEntity<KpisResponse> getKpis() {
         return ResponseEntity.ok(service.getKpis());
     }
