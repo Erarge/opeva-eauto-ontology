@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.erarge.opevaontology.dto.FilterOptionsResponse;
 import com.erarge.opevaontology.dto.FilteredQueryRequest;
 import com.erarge.opevaontology.dto.TimeIntervalQueryRequest;
+import com.erarge.opevaontology.dto.demo2.Demo2HeatmapResponseDTO;
 import com.erarge.opevaontology.dto.demo3.Demo3DatasetResponse;
 import com.erarge.opevaontology.dto.demo3.Demo3FilterOptionsResponse;
 import com.erarge.opevaontology.dto.demo5.KpisResponse;
@@ -67,6 +68,11 @@ public class APIController {
 			@RequestParam(required = false) Double soc) {
 		return ResponseEntity.ok(service.getDemo3Dataset(battery, soc));
 	}
+
+    @GetMapping("/api/demo2/heatmap")
+    public ResponseEntity<Demo2HeatmapResponseDTO> getDemo2Heatmap() {
+        return ResponseEntity.ok(service.getDemo2Heatmap());
+    }
 
 	@GetMapping("/api/demo5/kpis")
     public ResponseEntity<KpisResponse> getKpis() {

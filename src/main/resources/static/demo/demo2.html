@@ -4,9 +4,150 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OPEVA E-Auto Ontology Query Interface</title>
+  <title>OPEVA E-Auto Ontology Query Interface - Demo 2</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="../css/demo.css">
+  <style>
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin: 20px 0 30px;
+    }
+
+    .kpi-card,
+    .chart-card,
+    .info-card {
+      background: #fff;
+      border: 1px solid #e9ecef;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .kpi-card {
+      padding: 18px;
+    }
+
+    .kpi-label {
+      color: #6c757d;
+      font-size: 0.92rem;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .kpi-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #212529;
+    }
+
+    .section-title {
+      margin: 0 0 14px;
+      color: #333;
+      font-size: 1.2rem;
+    }
+
+    .chart-card,
+    .info-card {
+      padding: 18px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 520px;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 10px 0 0;
+      color: #6c757d;
+      font-size: 0.9rem;
+      flex-wrap: wrap;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .mono {
+      font-family: Consolas, Monaco, monospace;
+      word-break: break-word;
+      white-space: pre-wrap;
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #e9ecef;
+      max-height: 320px;
+      overflow: auto;
+    }
+
+    .muted {
+      color: #6c757d;
+    }
+
+    .toolbar-inline {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      align-items: center;
+    }
+
+    .legend-scale {
+      height: 12px;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #1d4ed8 0%, #22c55e 50%, #f59e0b 75%, #dc2626 100%);
+      border: 1px solid #d1d5db;
+      margin-top: 8px;
+    }
+
+    .legend-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin-top: 6px;
+    }
+
+    .empty-state {
+      padding: 20px;
+      text-align: center;
+      color: #6c757d;
+      background: #f8f9fa;
+      border: 1px dashed #ced4da;
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    th,
+    td {
+      border: 1px solid #e9ecef;
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    thead th {
+      background: #000;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #fcfcfc;
+    }
+  </style>
 </head>
 
 <body>
@@ -40,776 +181,526 @@
       <div id="success-message" class="success" style="display:none;"></div>
 
       <div class="form-section">
-        <h2>Query Parameters</h2>
-        <div class="info-box" id="options-info">
-          <p><strong>Loading filter options...</strong></p>
+        <h2>Efficiency heatmap explorer</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="batterySelect">Battery</label>
+            <select id="batterySelect">
+              <option value="">All batteries</option>
+            </select>
+          </div>
         </div>
-
-        <!-- Performance panel -->
-        <div class="perf-box" id="perf-panel" style="display:none;">
-          <h3>Performance</h3>
-          <div class="perf-grid" id="perf-grid"></div>
-          <div class="perf-muted" id="perf-note" style="margin-top:8px;"></div>
+        <div class="button-group">
+          <button class="btn-secondary" id="btnReset">Reset filter</button>
+          <button class="btn-secondary" id="btnDownloadCsv">Download CSV</button>
+          <button class="btn-secondary" id="btnDownloadJson">Download JSON</button>
         </div>
-
-        <form id="query-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="from-time">From Time *</label>
-              <input type="datetime-local" id="from-time" name="from" required />
-            </div>
-            <div class="form-group">
-              <label for="to-time">To Time *</label>
-              <input type="datetime-local" id="to-time" name="to" required />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="distance-mm">Coil Distance (mm) - Optional</label>
-              <select id="distance-mm" name="distanceMm">
-                <option value="">All distances</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="soc-percent">SOC (%) - Optional</label>
-              <select id="soc-percent" name="socPercent">
-                <option value="">All SOC values</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="button-group">
-            <button type="button" class="btn-primary" onclick="queryByTimeInterval()">Query by Time Interval</button>
-            <button type="button" class="btn-primary" onclick="queryFiltered()">Query with Filters</button>
-            <button type="button" class="btn-clear" onclick="clearForm()">Clear Form</button>
-            <button type="button" class="btn-secondary" onclick="loadFilterOptions()">Reload Options</button>
-          </div>
-        </form>
       </div>
 
-      <div class="results-section">
-        <div class="results-header">
-          <h2>Query Results</h2>
-          <div class="results-count" id="results-count"></div>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Batteries</div>
+          <div class="kpi-value" id="kpiBatteryCount">-</div>
         </div>
-
-        <div id="loading" class="loading" style="display:none;">
-          <div class="loading-spinner"></div>
-          <p>Loading results...</p>
+        <div class="kpi-card">
+          <div class="kpi-label">Heatmap bins</div>
+          <div class="kpi-value" id="kpiPointCount">-</div>
         </div>
-
-        <div id="charts-section" style="display:none; margin-top: 30px;">
-          <div class="chart-container-wrapper">
-            <div class="chart-container">
-              <h3>Efficiency vs Power</h3>
-              <canvas id="efficiencyChart"></canvas>
-            </div>
-          </div>
-
-          <div class="chart-container-wrapper">
-            <div class="chart-container">
-              <h3>Temperatures vs Power</h3>
-              <canvas id="temperatureChart"></canvas>
-            </div>
-          </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Total samples</div>
+          <div class="kpi-value" id="kpiSampleCount">-</div>
         </div>
-
-        <!-- DOWNLOAD BUTTON (before dataset table) -->
-        <div class="download-bar" id="download-bar">
-          <div class="download-meta">
-            Rows: <span id="download-rows">0</span> | Payload: <span id="download-bytes">-</span>
-          </div>
-          <button id="download-btn" type="button" class="btn-secondary" onclick="downloadCurrentDatasetAsCSV()">
-            Download CSV (Filtered Dataset)
-          </button>
+        <div class="kpi-card">
+          <div class="kpi-label">Voltage range</div>
+          <div class="kpi-value" id="kpiVoltageRange">-</div>
         </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Current range</div>
+          <div class="kpi-value" id="kpiCurrentRange">-</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Average efficiency</div>
+          <div class="kpi-value" id="kpiAvgEfficiency">-</div>
+        </div>
+      </div>
 
-        <div id="results-container" class="table-container"></div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h3 class="section-title">Active SPARQL</h3>
+          <div class="mono" id="queryText"></div>
+        </div>
+        <div class="info-card">
+          <h3 class="section-title">Dataset notes</h3>
+          <div id="datasetMeta" class="muted">No data loaded yet.</div>
+          <div class="legend-scale"></div>
+          <div class="legend-labels"><span>Lower efficiency</span><span>Higher efficiency</span></div>
+        </div>
+      </div>
+
+      <div class="chart-card" style="margin-top:24px;">
+        <h3 class="section-title">Efficiency heatmap (Voltage × Current)</h3>
+        <div class="chart-wrap"><canvas id="heatmapChart"></canvas></div>
+        <div class="meta-row">
+          <span>X axis: Primary Voltage bin center (V)</span>
+          <span>Y axis: Primary Current bin center (A)</span>
+          <span id="heatmapMeta"></span>
+        </div>
+      </div>
+
+      <div class="form-section" style="margin-top: 28px;">
+        <h2>Raw heatmap bins</h2>
+        <div class="toolbar-inline">
+          <span class="muted" id="tableMeta"></span>
+        </div>
+        <div class="table-container" id="tableHost"></div>
       </div>
     </div>
-  </div>
 
-  <script>
-    const API_BASE_URL = window.location.origin;
-    let efficiencyChart = null;
-    let temperatureChart = null;
+    <script>
+      const API_BASE_URL = '';
+      const DEFAULT_QUERY = `PREFIX :     <https://cloud.erarge.com.tr/ontologies/eauto#>
+PREFIX sosa: <http://www.w3.org/ns/sosa/>
+PREFIX bif:  <bif:>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
 
-    // Holds last returned dataset for CSV export
-    let lastDataset = [];
+SELECT
+  ?battery
+  (?Vbin * ?dV                 AS ?V_bin_start)
+  ((?Vbin + 1) * ?dV           AS ?V_bin_end)
+  (?Abin * ?dA                 AS ?A_bin_start)
+  ((?Abin + 1) * ?dA           AS ?A_bin_end)
+  ((?Vbin + 0.5) * ?dV         AS ?V_bin_center)
+  ((?Abin + 0.5) * ?dA         AS ?A_bin_center)
+  (AVG(?eff)                   AS ?avg_efficiency)
+  (COUNT(*)                    AS ?n_samples)
+WHERE {
+  GRAPH <https://cloud.erarge.com.tr/ontologies/eauto> {
+    BIND(5.0  AS ?dV)
+    BIND(1.0  AS ?dA)
 
-    const sessionColors = [
-      'rgba(102, 126, 234, 0.8)',
-      'rgba(118, 75, 162, 0.8)',
-      'rgba(237, 100, 166, 0.8)',
-      'rgba(255, 159, 64, 0.8)',
-      'rgba(75, 192, 192, 0.8)',
-      'rgba(153, 102, 255, 0.8)',
-      'rgba(255, 99, 132, 0.8)',
-      'rgba(54, 162, 235, 0.8)',
-      'rgba(255, 206, 86, 0.8)',
-      'rgba(201, 203, 207, 0.8)'
-    ];
+    ?obsE a sosa:Observation ;
+          sosa:hasFeatureOfInterest ?b ;
+          sosa:observedProperty :op_efficiency ;
+          sosa:hasSimpleResult ?eRaw ;
+          sosa:resultTime ?time .
 
-    // -------- PERF INSTRUMENTATION --------
-    const perf = { marks: {}, measures: {}, meta: {} };
+    ?obsV a sosa:Observation ;
+          sosa:hasFeatureOfInterest ?b ;
+          sosa:observedProperty :op_v_pri_v ;
+          sosa:hasSimpleResult ?vRaw ;
+          sosa:resultTime ?time .
 
-    function nowMs() { return performance.now(); }
-    function mark(name) { perf.marks[name] = nowMs(); }
-    function measure(name, startMark, endMark) {
-      const start = perf.marks[startMark];
-      const end = perf.marks[endMark];
-      if (!Number.isFinite(start) || !Number.isFinite(end)) return;
-      perf.measures[name] = end - start;
-    }
+    ?obsA a sosa:Observation ;
+          sosa:hasFeatureOfInterest ?b ;
+          sosa:observedProperty :op_a_pri_a ;
+          sosa:hasSimpleResult ?aRaw ;
+          sosa:resultTime ?time .
 
-    function resetPerf() {
-      perf.marks = {};
-      perf.measures = {};
-      perf.meta = {};
-      renderPerfPanel(); // clears panel
-    }
+    FILTER(isNumeric(?eRaw) && isNumeric(?vRaw) && isNumeric(?aRaw))
+    BIND(xsd:double(?eRaw) AS ?eff)
+    BIND(xsd:double(?vRaw) AS ?vPri)
+    BIND(xsd:double(?aRaw) AS ?aPri)
+    FILTER(?vPri > 0.0)
 
-    function fmtMs(v) {
-      if (!Number.isFinite(v)) return '-';
-      if (v < 1000) return `${v.toFixed(1)} ms`;
-      return `${(v / 1000).toFixed(2)} s`;
-    }
+    BIND(bif:floor(?vPri / ?dV) AS ?Vbin)
+    BIND(bif:floor(?aPri / ?dA) AS ?Abin)
+    BIND(REPLACE(STR(?b), "^.*(#|/)", "") AS ?battery)
+  }
+}
+GROUP BY ?battery ?Vbin ?Abin ?dV ?dA
+ORDER BY ?battery ?Vbin ?Abin`;
 
-    function approxBytesOfJson(obj) {
-      try {
-        const s = JSON.stringify(obj);
-        return new Blob([s]).size;
-      } catch {
-        return null;
-      }
-    }
+      let allDataset = { summary: null, points: [] };
+      let currentDataset = { summary: null, points: [] };
+      let heatmapChart = null;
 
-    function fmtBytes(bytes) {
-      if (!Number.isFinite(bytes)) return '-';
-      const units = ['B', 'KB', 'MB', 'GB'];
-      let u = 0, b = bytes;
-      while (b >= 1024 && u < units.length - 1) { b /= 1024; u++; }
-      return `${b.toFixed(u === 0 ? 0 : 2)} ${units[u]}`;
-    }
-
-    function renderPerfPanel() {
-      const panel = document.getElementById('perf-panel');
-      const grid = document.getElementById('perf-grid');
-      const note = document.getElementById('perf-note');
-
-      const rows = [];
-      const m = perf.measures;
-
-      rows.push(['Options load', fmtMs(m.options_total)]);
-      rows.push(['API request (fetch)', fmtMs(m.api_fetch)]);
-      rows.push(['JSON parse', fmtMs(m.api_json)]);
-      rows.push(['Table render', fmtMs(m.table_render)]);
-      rows.push(['Chart data prep', fmtMs(m.chart_prep)]);
-      rows.push(['Chart render', fmtMs(m.chart_render)]);
-      rows.push(['Total end-to-end', fmtMs(m.total)]);
-
-      rows.push(['Rows returned', (perf.meta.rows ?? '-') + '']);
-      rows.push(['Payload size (approx)', fmtBytes(perf.meta.payloadBytes)]);
-
-      grid.innerHTML = rows
-        .filter(([_, v]) => v !== '-' && v !== 'null' && v !== 'undefined')
-        .map(([k, v]) => `<div><strong>${k}</strong></div><div>${v}</div>`)
-        .join('');
-
-      const items = [];
-      if (perf.meta.endpoint) items.push(`Endpoint: ${perf.meta.endpoint}`);
-      if (perf.meta.from && perf.meta.to) items.push(`Interval: ${perf.meta.from} → ${perf.meta.to}`);
-      note.textContent = items.join(' | ');
-
-      panel.style.display = (grid.innerHTML.trim().length > 0) ? 'block' : 'none';
-
-      if (Object.keys(perf.measures).length > 0) {
-        console.groupCollapsed('[PERF] Query performance');
-        console.table({
-          'Options load': m.options_total,
-          'API fetch': m.api_fetch,
-          'JSON parse': m.api_json,
-          'Table render': m.table_render,
-          'Chart prep': m.chart_prep,
-          'Chart render': m.chart_render,
-          'Total': m.total
-        });
-        console.log('[PERF meta]', perf.meta);
-        console.groupEnd();
-      }
-    }
-
-    // -------- DOWNLOAD UI --------
-    function toggleDownloadBar(show) {
-      const bar = document.getElementById('download-bar');
-      if (!bar) return;
-      bar.style.display = show ? 'flex' : 'none';
-    }
-
-    function updateDownloadMeta(rows, bytes) {
-      const r = document.getElementById('download-rows');
-      const b = document.getElementById('download-bytes');
-      if (r) r.textContent = (rows ?? 0) + '';
-      if (b) b.textContent = fmtBytes(bytes);
-    }
-
-    function downloadCurrentDatasetAsCSV() {
-      if (!Array.isArray(lastDataset) || lastDataset.length === 0) {
-        showError('No dataset available to download.');
-        return;
-      }
-
-      // Collect all keys across rows (stable column set)
-      const keys = Array.from(
-        lastDataset.reduce((set, row) => {
-          Object.keys(row || {}).forEach(k => set.add(k));
-          return set;
-        }, new Set())
-      ).sort();
-
-      // CSV escape
-      const esc = (v) => {
-        const s = (v == null) ? '' : String(v);
-        const cleaned = cleanValue(s);
-        const needsQuotes = /[",\n\r]/.test(cleaned);
-        const q = cleaned.replace(/"/g, '""');
-        return needsQuotes ? `"${q}"` : q;
+      const UI_IDS = {
+        battery: 'batterySelect',
+        queryText: 'queryText',
+        errorMessage: 'error-message',
+        successMessage: 'success-message',
+        datasetMeta: 'datasetMeta',
+        heatmapMeta: 'heatmapMeta',
+        tableMeta: 'tableMeta',
+        tableHost: 'tableHost'
       };
 
-      const header = keys.map(esc).join(',');
-      const lines = lastDataset.map(row => keys.map(k => esc(row?.[k])).join(','));
-      const csv = [header, ...lines].join('\r\n');
+      function el(id) { return document.getElementById(id); }
+      function batteryEl() { return el(UI_IDS.battery); }
 
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-
-      // Filename based on current filters (best-effort)
-      const from = document.getElementById('from-time')?.value || 'from';
-      const to = document.getElementById('to-time')?.value || 'to';
-      const dist = document.getElementById('distance-mm')?.value || 'allDist';
-      const soc = document.getElementById('soc-percent')?.value || 'allSoc';
-      const safe = (s) => String(s).replace(/[:]/g, '-').replace(/[^\w\-T]/g, '_');
-      const filename = `opeva_filtered_${safe(from)}_${safe(to)}_dist-${safe(dist)}_soc-${safe(soc)}.csv`;
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    // Load filter options on page load
-    window.addEventListener('DOMContentLoaded', () => {
-      loadFilterOptions();
-    });
-
-    async function loadFilterOptions() {
-      resetPerf();
-      mark('options_start');
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/filter-options`);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const data = await response.json();
-
-        document.getElementById('options-info').innerHTML = `
-          <p><strong>Available ranges:</strong></p>
-          <p>Time: ${data.minTime ? new Date(data.minTime).toLocaleString() : 'N/A'} to ${data.maxTime ? new Date(data.maxTime).toLocaleString() : 'N/A'}</p>
-          <p>Distance options: ${data.distanceMmOptions ? data.distanceMmOptions.length : 0}</p>
-          <p>SOC options: ${data.socPercentOptions ? data.socPercentOptions.length : 0}</p>
-        `;
-
-        const distanceSelect = document.getElementById('distance-mm');
-        distanceSelect.innerHTML = '<option value="">All distances</option>';
-        (data.distanceMmOptions || []).forEach(distance => {
-          const option = document.createElement('option');
-          option.value = distance;
-          option.textContent = `${distance} mm`;
-          distanceSelect.appendChild(option);
-        });
-
-        const socSelect = document.getElementById('soc-percent');
-        socSelect.innerHTML = '<option value="">All SOC values</option>';
-        (data.socPercentOptions || []).forEach(soc => {
-          const option = document.createElement('option');
-          option.value = soc;
-          option.textContent = `${soc}%`;
-          socSelect.appendChild(option);
-        });
-
-        if (data.minTime && !document.getElementById('from-time').value) {
-          document.getElementById('from-time').value = formatDateTimeLocal(data.minTime);
-        }
-        if (data.maxTime && !document.getElementById('to-time').value) {
-          document.getElementById('to-time').value = formatDateTimeLocal(data.maxTime);
-        }
-
-        showSuccess('Filter options loaded successfully');
-      } catch (error) {
-        showError('Failed to load filter options: ' + error.message);
-        console.error('Error loading filter options:', error);
-      } finally {
-        mark('options_end');
-        measure('options_total', 'options_start', 'options_end');
-        renderPerfPanel();
+      function showError(message) {
+        el(UI_IDS.errorMessage).textContent = message || 'An unexpected error occurred.';
+        el(UI_IDS.errorMessage).style.display = 'block';
+        el(UI_IDS.successMessage).style.display = 'none';
       }
-    }
 
-    function formatDateTimeLocal(dateTimeString) {
-      const date = new Date(dateTimeString);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${year}-${month}-${day}T${hours}:${minutes}`;
-    }
-
-    function formatDateTimeForAPI(datetimeLocalValue) {
-      return datetimeLocalValue + ':00';
-    }
-
-    async function queryByTimeInterval() {
-      const from = document.getElementById('from-time').value;
-      const to = document.getElementById('to-time').value;
-      if (!from || !to) { showError('Please provide both From Time and To Time'); return; }
-
-      const requestBody = { from: formatDateTimeForAPI(from), to: formatDateTimeForAPI(to) };
-      await executeQuery('/api/query/time-interval', requestBody, { from, to });
-    }
-
-    async function queryFiltered() {
-      const from = document.getElementById('from-time').value;
-      const to = document.getElementById('to-time').value;
-      const distanceMm = document.getElementById('distance-mm').value;
-      const socPercent = document.getElementById('soc-percent').value;
-      if (!from || !to) { showError('Please provide both From Time and To Time'); return; }
-
-      const requestBody = {
-        from: formatDateTimeForAPI(from),
-        to: formatDateTimeForAPI(to),
-        distanceMm: distanceMm ? parseFloat(distanceMm) : null,
-        socPercent: socPercent ? parseFloat(socPercent) : null
-      };
-
-      await executeQuery('/api/query/filtered', requestBody, { from, to });
-    }
-
-    async function executeQuery(endpoint, requestBody, meta = {}) {
-      resetPerf();
-      perf.meta.endpoint = endpoint;
-      perf.meta.from = meta.from || null;
-      perf.meta.to = meta.to || null;
-
-      // Reset dataset + download bar each query
-      lastDataset = [];
-      toggleDownloadBar(false);
-      updateDownloadMeta(0, null);
-
-      const loadingDiv = document.getElementById('loading');
-      const resultsContainer = document.getElementById('results-container');
-      const resultsCount = document.getElementById('results-count');
-
-      try {
-        mark('total_start');
-
-        loadingDiv.style.display = 'block';
-        resultsContainer.innerHTML = '';
-        resultsCount.textContent = '';
-        hideMessages();
-
-        // --- API fetch timing ---
-        mark('api_fetch_start');
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody)
-        });
-        mark('api_fetch_end');
-        measure('api_fetch', 'api_fetch_start', 'api_fetch_end');
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-        }
-
-        // --- JSON parse timing ---
-        mark('api_json_start');
-        const data = await response.json();
-        mark('api_json_end');
-        measure('api_json', 'api_json_start', 'api_json_end');
-
-        // Meta: dataset size
-        perf.meta.rows = Array.isArray(data) ? data.length : 0;
-        perf.meta.payloadBytes = approxBytesOfJson(data);
-
-        if (Array.isArray(data) && data.length > 0) {
-          // Store for download
-          lastDataset = data;
-          toggleDownloadBar(true);
-          updateDownloadMeta(perf.meta.rows, perf.meta.payloadBytes);
-
-          // Table render timing
-          mark('table_start');
-          displayResults(data);
-          mark('table_end');
-          measure('table_render', 'table_start', 'table_end');
-
-          // Chart timing: data prep + render separated
-          mark('chart_prep_start');
-          const sessionGroups = groupBySession(data);
-          mark('chart_prep_end');
-          measure('chart_prep', 'chart_prep_start', 'chart_prep_end');
-
-          mark('chart_render_start');
-          generateEfficiencyChart(sessionGroups);
-          generateTemperatureChart(sessionGroups);
-          document.getElementById('charts-section').style.display = 'block';
-          mark('chart_render_end');
-          measure('chart_render', 'chart_render_start', 'chart_render_end');
-
-          resultsCount.textContent = `${data.length} result(s) found`;
-          showSuccess(`Query executed successfully. Found ${data.length} result(s).`);
-        } else {
-          lastDataset = [];
-          toggleDownloadBar(false);
-          updateDownloadMeta(0, perf.meta.payloadBytes);
-
-          resultsContainer.innerHTML = '<p style="padding:20px; text-align:center; color:#666;">No results found for the given criteria.</p>';
-          resultsCount.textContent = '0 results';
-          document.getElementById('charts-section').style.display = 'none';
-          if (efficiencyChart) efficiencyChart.destroy();
-          if (temperatureChart) temperatureChart.destroy();
-          showSuccess('Query executed successfully, but no results found.');
-        }
-      } catch (error) {
-        showError('Query failed: ' + error.message);
-        resultsContainer.innerHTML = '';
-        resultsCount.textContent = '';
-        console.error('Error executing query:', error);
-
-        lastDataset = [];
-        toggleDownloadBar(false);
-        updateDownloadMeta(0, null);
-      } finally {
-        loadingDiv.style.display = 'none';
-
-        mark('total_end');
-        measure('total', 'total_start', 'total_end');
-
-        renderPerfPanel();
+      function showSuccess(message) {
+        el(UI_IDS.successMessage).textContent = message || '';
+        el(UI_IDS.successMessage).style.display = 'block';
+        el(UI_IDS.errorMessage).style.display = 'none';
       }
-    }
 
-    function groupBySession(results) {
-      const sessionGroups = {};
-      results.forEach((r, idx) => {
-        const session = r.session || `session_${idx}`;
-        if (!sessionGroups[session]) sessionGroups[session] = [];
-        sessionGroups[session].push(r);
-      });
-      return sessionGroups;
-    }
+      function hideMessages() {
+        el(UI_IDS.errorMessage).style.display = 'none';
+        el(UI_IDS.successMessage).style.display = 'none';
+      }
 
-    function displayResults(results) {
-      if (!results || results.length === 0) return;
+      async function httpGet(url) {
+        const response = await fetch(url, { method: 'GET' });
+        if (!response.ok) throw new Error(`HTTP ${response.status} @ ${url}`);
+        return await response.json();
+      }
 
-      const allKeys = new Set();
-      results.forEach(r => Object.keys(r).forEach(k => allKeys.add(k)));
-      const keys = Array.from(allKeys).sort();
+      function formatNumber(value, digits = 2) {
+        return Number.isFinite(value) ? Number(value).toFixed(digits) : '-';
+      }
 
-      let html = '<table><thead><tr>';
-      keys.forEach(k => { html += `<th>${k}</th>`; });
-      html += '</tr></thead><tbody>';
+      function formatRange(minV, maxV, unit, digits = 2) {
+        if (!Number.isFinite(minV) || !Number.isFinite(maxV)) return '-';
+        return `${formatNumber(minV, digits)} - ${formatNumber(maxV, digits)} ${unit}`;
+      }
 
-      results.forEach(r => {
-        html += '<tr>';
-        keys.forEach(k => {
-          const value = r[k] ?? '';
-          const clean = cleanValue(value);
-          html += `<td>${escapeHtml(clean)}</td>`;
+      function setKpi(id, value) {
+        const target = el(id);
+        if (target) target.textContent = value;
+      }
+
+      function fillSelect(selectId, values, placeholder, formatter = v => v) {
+        const select = el(selectId);
+        if (!select) return;
+        const current = select.value;
+        select.innerHTML = '';
+        const first = document.createElement('option');
+        first.value = '';
+        first.textContent = placeholder;
+        select.appendChild(first);
+        (values || []).forEach((value) => {
+          const option = document.createElement('option');
+          option.value = value;
+          option.textContent = formatter(value);
+          select.appendChild(option);
         });
-        html += '</tr>';
-      });
+        const canRestore = [...select.options].some(opt => opt.value === current);
+        if (canRestore) select.value = current;
+      }
 
-      html += '</tbody></table>';
-      document.getElementById('results-container').innerHTML = html;
-    }
+      function getBatteryOptionsFromDataset() {
+        return [...new Set((allDataset.points || []).map(p => String(p.battery ?? '')))]
+          .filter(Boolean)
+          .sort();
+      }
 
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
+      function refreshBatteryOptions() {
+        const selected = batteryEl()?.value || '';
+        fillSelect(UI_IDS.battery, getBatteryOptionsFromDataset(), 'All batteries');
+        if (batteryEl()) batteryEl().value = selected;
+      }
 
-    function clearForm() {
-      document.getElementById('query-form').reset();
-      document.getElementById('results-container').innerHTML = '';
-      document.getElementById('results-count').textContent = '';
-      document.getElementById('charts-section').style.display = 'none';
-      if (efficiencyChart) { efficiencyChart.destroy(); efficiencyChart = null; }
-      if (temperatureChart) { temperatureChart.destroy(); temperatureChart = null; }
-      hideMessages();
-      resetPerf();
+      function updateQueryPreview() {
+        const battery = batteryEl()?.value || '';
+        const preview = [DEFAULT_QUERY];
+        if (battery) preview.push(`\n# Filtered battery: ${battery}`);
+        el(UI_IDS.queryText).textContent = preview.join('');
+      }
 
-      lastDataset = [];
-      toggleDownloadBar(false);
-      updateDownloadMeta(0, null);
-    }
+      function getFilteredPoints() {
+        const selectedBattery = batteryEl()?.value || '';
+        return (allDataset.points || []).filter(point => !selectedBattery || String(point.battery ?? '') === selectedBattery);
+      }
 
-    // ---------- CHARTS ----------
-
-    function generateEfficiencyChart(sessionGroups) {
-      const canvas = document.getElementById('efficiencyChart');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-
-      if (efficiencyChart) efficiencyChart.destroy();
-
-      const datasets = [];
-      const sessionKeys = Object.keys(sessionGroups);
-      const allPowers = [];
-
-      sessionKeys.forEach((sessionKey, sessionIndex) => {
-        const sessionData = sessionGroups[sessionKey];
-        const color = sessionColors[sessionIndex % sessionColors.length];
-
-        const points = sessionData
-          .map(r => {
-            const power = calculatePower(r);
-            const effRaw = parseFloat(cleanValue(r.efficiency));
-            const effPct = effRaw * 100;
-            const time = parseTime(r.tNorm || r.timestamp);
-            return { x: power, y: effPct, time, power };
-          })
-          .filter(p => Number.isFinite(p.x) && p.x > 0 && Number.isFinite(p.y) && p.y >= 0 && p.y <= 100)
-          .sort((a, b) => a.x - b.x);
-
-        points.forEach(p => allPowers.push(p.x));
-
-        if (points.length > 0) {
-          datasets.push({
-            label: `Session ${sessionIndex + 1} - Efficiency`,
-            data: points,
-            borderColor: color,
-            backgroundColor: color.replace('0.8', '0.2'),
-            borderWidth: 2,
-            fill: false,
-            tension: 0.4,
-            cubicInterpolationMode: 'monotone',
-            pointRadius: 0,
-            pointHoverRadius: 4
-          });
+      function buildSummaryFromPoints(points) {
+        if (!points.length) {
+          return { batteryCount: 0, pointCount: 0, totalSamples: 0, minVoltage: null, maxVoltage: null, minCurrent: null, maxCurrent: null, averageEfficiency: null, minEfficiency: null, maxEfficiency: null };
         }
-      });
 
-      const { min: xMin, max: xMax } = computeAxisRange(allPowers, 100);
+        const batteries = new Set(points.map(p => String(p.battery ?? '')).filter(Boolean));
+        const totalSamples = points.reduce((sum, p) => sum + Number(p.sampleCount || 0), 0);
+        const weightedSum = points.reduce((sum, p) => sum + (Number(p.averageEfficiency || 0) * Number(p.sampleCount || 0)), 0);
 
-      efficiencyChart = new Chart(ctx, {
-        type: 'line',
-        data: { datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          interaction: { intersect: false, mode: 'index' },
-          plugins: {
-            title: { display: true, text: 'Efficiency vs Power', font: { size: 16, weight: 'bold' } },
-            legend: { display: true, position: 'top' },
-            tooltip: {
-              callbacks: {
-                label: function (context) {
-                  const label = context.dataset.label || '';
-                  const eff = Number.isFinite(context.parsed.y) ? context.parsed.y.toFixed(2) : 'N/A';
-                  const pwr = Number.isFinite(context.parsed.x) ? context.parsed.x.toFixed(2) : 'N/A';
-                  const time = context.raw && context.raw.time ? new Date(context.raw.time).toLocaleString() : 'N/A';
-                  return `${label}: ${eff}% | Power: ${pwr} W | Time: ${time}`;
+        return {
+          batteryCount: batteries.size,
+          pointCount: points.length,
+          totalSamples,
+          minVoltage: Math.min(...points.map(p => Number(p.vBinStart))),
+          maxVoltage: Math.max(...points.map(p => Number(p.vBinEnd))),
+          minCurrent: Math.min(...points.map(p => Number(p.aBinStart))),
+          maxCurrent: Math.max(...points.map(p => Number(p.aBinEnd))),
+          minEfficiency: Math.min(...points.map(p => Number(p.averageEfficiency))),
+          maxEfficiency: Math.max(...points.map(p => Number(p.averageEfficiency))),
+          averageEfficiency: totalSamples > 0 ? (weightedSum / totalSamples) : null
+        };
+      }
+
+      function clamp01(value) {
+        return Math.max(0, Math.min(1, value));
+      }
+
+      function lerp(a, b, t) {
+        return Math.round(a + (b - a) * t);
+      }
+
+      function efficiencyColor(value, min, max) {
+        if (!Number.isFinite(value)) return 'rgba(107, 114, 128, 0.75)';
+        const span = max - min;
+        const t = span > 0 ? clamp01((value - min) / span) : 0.5;
+
+        const stops = [
+          { t: 0.00, c: [29, 78, 216] },
+          { t: 0.50, c: [34, 197, 94] },
+          { t: 0.75, c: [245, 158, 11] },
+          { t: 1.00, c: [220, 38, 38] }
+        ];
+
+        let left = stops[0];
+        let right = stops[stops.length - 1];
+        for (let i = 0; i < stops.length - 1; i++) {
+          if (t >= stops[i].t && t <= stops[i + 1].t) {
+            left = stops[i];
+            right = stops[i + 1];
+            break;
+          }
+        }
+
+        const localT = (t - left.t) / (right.t - left.t || 1);
+        const rgb = [
+          lerp(left.c[0], right.c[0], localT),
+          lerp(left.c[1], right.c[1], localT),
+          lerp(left.c[2], right.c[2], localT)
+        ];
+        return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.88)`;
+      }
+
+      function destroyChart() {
+        if (heatmapChart) {
+          heatmapChart.destroy();
+          heatmapChart = null;
+        }
+      }
+
+      function renderChart(points, summary) {
+        if (!points.length) {
+          destroyChart();
+          el(UI_IDS.heatmapMeta).textContent = '0 bins';
+          return;
+        }
+
+        const ctx = el('heatmapChart').getContext('2d');
+        destroyChart();
+
+        const minEff = Number(summary.minEfficiency);
+        const maxEff = Number(summary.maxEfficiency);
+        const minSamples = Math.min(...points.map(p => Number(p.sampleCount || 0)));
+        const maxSamples = Math.max(...points.map(p => Number(p.sampleCount || 0)));
+
+        const datasets = points.map((point) => {
+          const sampleCount = Number(point.sampleCount || 0);
+          const sizeScale = maxSamples > minSamples ? ((sampleCount - minSamples) / (maxSamples - minSamples)) : 0.5;
+          const pointRadius = 10 + (sizeScale * 12);
+
+          return {
+            label: `${point.battery} | V ${point.vBinStart}-${point.vBinEnd} | A ${point.aBinStart}-${point.aBinEnd}`,
+            data: [{ x: Number(point.vBinCenter), y: Number(point.aBinCenter) }],
+            pointStyle: 'rectRounded',
+            pointRadius,
+            pointHoverRadius: pointRadius + 2,
+            pointBackgroundColor: efficiencyColor(Number(point.averageEfficiency), minEff, maxEff),
+            pointBorderColor: 'rgba(17, 24, 39, 0.35)',
+            pointBorderWidth: 1,
+            showLine: false,
+            parsing: false,
+            extra: point
+          };
+        });
+
+        heatmapChart = new Chart(ctx, {
+          type: 'scatter',
+          data: { datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title(items) {
+                    const extra = items?.[0]?.dataset?.extra;
+                    return extra?.battery ? `${extra.battery}` : 'Heatmap bin';
+                  },
+                  label(item) {
+                    const p = item.dataset.extra;
+                    return [
+                      `Voltage bin: ${formatNumber(p.vBinStart, 2)} - ${formatNumber(p.vBinEnd, 2)} V`,
+                      `Current bin: ${formatNumber(p.aBinStart, 2)} - ${formatNumber(p.aBinEnd, 2)} A`,
+                      `Avg efficiency: ${formatNumber(p.averageEfficiency, 4)}`,
+                      `Samples: ${p.sampleCount}`
+                    ];
+                  }
                 }
               }
-            }
-          },
-          scales: {
-            x: {
-              type: 'linear',
-              title: { display: true, text: 'Power (W)' },
-              beginAtZero: false,
-              min: xMin,
-              max: xMax
             },
-            y: {
-              title: { display: true, text: 'Efficiency (%)' },
-              beginAtZero: true,
-              max: 100
+            scales: {
+              x: {
+                title: { display: true, text: 'Primary Voltage bin center (V)' },
+                grid: { color: 'rgba(0,0,0,0.06)' }
+              },
+              y: {
+                title: { display: true, text: 'Primary Current bin center (A)' },
+                grid: { color: 'rgba(0,0,0,0.06)' }
+              }
             }
-          }
-        }
-      });
-    }
-
-    function generateTemperatureChart(sessionGroups) {
-      const canvas = document.getElementById('temperatureChart');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-
-      if (temperatureChart) temperatureChart.destroy();
-
-      const coilDatasets = [];
-      const ambientDatasets = [];
-      const sessionKeys = Object.keys(sessionGroups);
-      const allPowers = [];
-
-      sessionKeys.forEach((sessionKey, sessionIndex) => {
-        const sessionData = sessionGroups[sessionKey];
-        const baseColor = sessionColors[sessionIndex % sessionColors.length];
-
-        const coilPoints = [];
-        const ambientPoints = [];
-
-        sessionData.forEach(r => {
-          const power = calculatePower(r);
-          const coilTemp = parseFloat(cleanValue(r.t_coil_c || r.tCoilC));
-          const ambientTemp = parseFloat(cleanValue(r.t_ambiant_c || r.tAmbiantC || r.t_ambiantC));
-
-          if (Number.isFinite(power) && power > 0) {
-            allPowers.push(power);
-            if (Number.isFinite(coilTemp)) coilPoints.push({ x: power, y: coilTemp });
-            if (Number.isFinite(ambientTemp)) ambientPoints.push({ x: power, y: ambientTemp });
           }
         });
 
-        coilPoints.sort((a, b) => a.x - b.x);
-        ambientPoints.sort((a, b) => a.x - b.x);
+        el(UI_IDS.heatmapMeta).textContent = `${points.length} bins | ${summary.totalSamples || 0} total samples`;
+      }
 
-        if (coilPoints.length > 0) {
-          const coilColor = baseColor.replace('0.8', '0.7');
-          coilDatasets.push({
-            label: `Session ${sessionIndex + 1} - Coil Temp`,
-            data: coilPoints,
-            borderColor: coilColor,
-            backgroundColor: coilColor.replace('0.7', '0.2'),
-            borderWidth: 2,
-            fill: false,
-            tension: 0.4,
-            cubicInterpolationMode: 'monotone',
-            pointRadius: 0,
-            pointHoverRadius: 4
-          });
+      function escapeHtml(value) {
+        return String(value ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function renderTable(points) {
+        const host = el(UI_IDS.tableHost);
+        const battery = batteryEl()?.value || '';
+
+        if (!points.length) {
+          host.innerHTML = '<div class="empty-state">No heatmap bins found for the selected battery.</div>';
+          el(UI_IDS.tableMeta).textContent = `0 rows${battery ? ` | Battery: ${battery}` : ''}`;
+          return;
         }
 
-        if (ambientPoints.length > 0) {
-          const ambientColor = baseColor.replace('0.8', '0.5');
-          ambientDatasets.push({
-            label: `Session ${sessionIndex + 1} - Ambient Temp`,
-            data: ambientPoints,
-            borderColor: ambientColor,
-            backgroundColor: ambientColor.replace('0.5', '0.15'),
-            borderWidth: 2,
-            borderDash: [5, 5],
-            fill: false,
-            tension: 0.4,
-            cubicInterpolationMode: 'monotone',
-            pointRadius: 0,
-            pointHoverRadius: 4
-          });
+        const rows = points.map((point) => `
+        <tr>
+          <td>${escapeHtml(point.battery)}</td>
+          <td>${escapeHtml(formatNumber(point.vBinStart, 2))}</td>
+          <td>${escapeHtml(formatNumber(point.vBinEnd, 2))}</td>
+          <td>${escapeHtml(formatNumber(point.aBinStart, 2))}</td>
+          <td>${escapeHtml(formatNumber(point.aBinEnd, 2))}</td>
+          <td>${escapeHtml(formatNumber(point.vBinCenter, 2))}</td>
+          <td>${escapeHtml(formatNumber(point.aBinCenter, 2))}</td>
+          <td>${escapeHtml(formatNumber(point.averageEfficiency, 4))}</td>
+          <td>${escapeHtml(point.sampleCount)}</td>
+        </tr>
+      `).join('');
+
+        host.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Battery</th>
+              <th>V Bin Start</th>
+              <th>V Bin End</th>
+              <th>A Bin Start</th>
+              <th>A Bin End</th>
+              <th>V Bin Center</th>
+              <th>A Bin Center</th>
+              <th>Avg Efficiency</th>
+              <th>Samples</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+
+        el(UI_IDS.tableMeta).textContent = `${points.length} rows${battery ? ` | Battery: ${battery}` : ''}`;
+      }
+
+      function renderSummary(summary, points) {
+        setKpi('kpiBatteryCount', summary.batteryCount ?? 0);
+        setKpi('kpiPointCount', summary.pointCount ?? 0);
+        setKpi('kpiSampleCount', summary.totalSamples ?? 0);
+        setKpi('kpiVoltageRange', formatRange(summary.minVoltage, summary.maxVoltage, 'V', 2));
+        setKpi('kpiCurrentRange', formatRange(summary.minCurrent, summary.maxCurrent, 'A', 2));
+        setKpi('kpiAvgEfficiency', Number.isFinite(summary.averageEfficiency) ? formatNumber(summary.averageEfficiency, 4) : '-');
+
+        const battery = batteryEl()?.value || '';
+        el(UI_IDS.datasetMeta).textContent = points.length
+          ? `Loaded ${points.length} heatmap bins${battery ? ` for ${battery}` : ''}. Cell colour represents average efficiency and marker size reflects sample count.`
+          : 'No data loaded for the selected battery.';
+      }
+
+      function applyCurrentFilterAndRender() {
+        const filteredPoints = getFilteredPoints();
+        const filteredSummary = buildSummaryFromPoints(filteredPoints);
+        currentDataset = { summary: filteredSummary, points: filteredPoints };
+        updateQueryPreview();
+        renderSummary(filteredSummary, filteredPoints);
+        renderChart(filteredPoints, filteredSummary);
+        renderTable(filteredPoints);
+        showSuccess(filteredPoints.length
+          ? `Showing ${filteredPoints.length} filtered heatmap bins.`
+          : 'No heatmap bins matched the selected battery.');
+      }
+
+      async function loadDataset() {
+        hideMessages();
+        updateQueryPreview();
+        const data = await httpGet(`${API_BASE_URL}/api/demo2/heatmap`);
+        allDataset = data || { summary: null, points: [] };
+        if (!Array.isArray(allDataset.points)) allDataset.points = [];
+        refreshBatteryOptions();
+        applyCurrentFilterAndRender();
+      }
+
+      function downloadFile(filename, content, mimeType) {
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      function downloadCsv() {
+        const points = Array.isArray(currentDataset.points) ? currentDataset.points : [];
+        if (!points.length) {
+          showError('No filtered dataset available for CSV export.');
+          return;
+        }
+        const header = ['battery', 'vBinStart', 'vBinEnd', 'aBinStart', 'aBinEnd', 'vBinCenter', 'aBinCenter', 'averageEfficiency', 'sampleCount'];
+        const lines = points.map((p) => header.map((h) => JSON.stringify(p[h] ?? '')).join(','));
+        downloadFile('demo2_heatmap.csv', [header.join(','), ...lines].join('\n'), 'text/csv;charset=utf-8;');
+      }
+
+      function downloadJson() {
+        const points = Array.isArray(currentDataset.points) ? currentDataset.points : [];
+        if (!points.length) {
+          showError('No filtered dataset available for JSON export.');
+          return;
+        }
+        downloadFile('demo2_heatmap.json', JSON.stringify(currentDataset, null, 2), 'application/json;charset=utf-8;');
+      }
+
+      function resetFilter() {
+        if (batteryEl()) batteryEl().value = '';
+        applyCurrentFilterAndRender();
+      }
+
+      function bindEvents() {
+        batteryEl()?.addEventListener('change', applyCurrentFilterAndRender);
+        el('btnReset')?.addEventListener('click', resetFilter);
+        el('btnDownloadCsv')?.addEventListener('click', downloadCsv);
+        el('btnDownloadJson')?.addEventListener('click', downloadJson);
+      }
+
+      window.addEventListener('DOMContentLoaded', async () => {
+        try {
+          el(UI_IDS.queryText).textContent = DEFAULT_QUERY;
+          bindEvents();
+          await loadDataset();
+        } catch (error) {
+          console.error(error);
+          showError(error?.message || 'Demo 2 failed to load.');
         }
       });
-
-      const allDatasets = [...coilDatasets, ...ambientDatasets];
-      const { min: xMin, max: xMax } = computeAxisRange(allPowers, 100);
-
-      temperatureChart = new Chart(ctx, {
-        type: 'line',
-        data: { datasets: allDatasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          interaction: { intersect: false, mode: 'index' },
-          plugins: {
-            title: { display: true, text: 'Temperatures vs Power', font: { size: 16, weight: 'bold' } },
-            legend: { display: true, position: 'top' }
-          },
-          scales: {
-            x: {
-              type: 'linear',
-              title: { display: true, text: 'Power (W)' },
-              beginAtZero: false,
-              min: xMin,
-              max: xMax
-            },
-            y: {
-              title: { display: true, text: 'Temperature (°C)' },
-              beginAtZero: false
-            }
-          }
-        }
-      });
-    }
-
-    // ---------- HELPERS ----------
-
-    function computeAxisRange(values, pad) {
-      const finite = (values || []).filter(v => Number.isFinite(v));
-      if (finite.length === 0) return { min: 0, max: 1 };
-      let min = Math.min(...finite);
-      let max = Math.max(...finite);
-      min = min - pad;
-      max = max + pad;
-      if (min === max) { min -= pad; max += pad; }
-      return { min, max };
-    }
-
-    function parseTime(timeStr) {
-      if (!timeStr) return new Date();
-      const cleaned = cleanValue(timeStr);
-      const normalized = cleaned.replace(' ', 'T');
-      return new Date(normalized);
-    }
-
-    function calculatePower(result) {
-      const pPri = parseFloat(cleanValue(result.p_pri || result.pPri || ''));
-      if (Number.isFinite(pPri) && pPri > 0) return pPri;
-
-      const pSin = parseFloat(cleanValue(result.p_sin || result.pSin || ''));
-      if (Number.isFinite(pSin) && pSin > 0) return pSin;
-
-      const vPri = parseFloat(cleanValue(result.v_pri_v || result.vPriV || result.v_priV || ''));
-      const aPri = parseFloat(cleanValue(result.a_pri_a || result.aPriA || result.a_priA || ''));
-      if (Number.isFinite(vPri) && Number.isFinite(aPri) && vPri > 0 && aPri > 0) return vPri * aPri;
-
-      const vSin = parseFloat(cleanValue(result.v_sin_v || result.vSinV || result.v_sinV || ''));
-      const aSin = parseFloat(cleanValue(result.a_sin_a || result.aSinA || result.a_sinA || ''));
-      if (Number.isFinite(vSin) && Number.isFinite(aSin) && vSin > 0 && aSin > 0) return vSin * aSin;
-
-      return 0;
-    }
-
-    function cleanValue(value) {
-      if (value == null) return '';
-      const str = String(value);
-      return str.replace(/^"|"(@|\^\^).*$/g, '').replace(/"/g, '').trim();
-    }
-
-    function showError(message) {
-      const errorDiv = document.getElementById('error-message');
-      errorDiv.textContent = message;
-      errorDiv.style.display = 'block';
-      document.getElementById('success-message').style.display = 'none';
-    }
-
-    function showSuccess(message) {
-      const successDiv = document.getElementById('success-message');
-      successDiv.textContent = message;
-      successDiv.style.display = 'block';
-      document.getElementById('error-message').style.display = 'none';
-    }
-
-    function hideMessages() {
-      document.getElementById('error-message').style.display = 'none';
-      document.getElementById('success-message').style.display = 'none';
-    }
-  </script>
+    </script>
 </body>
 
 </html>
