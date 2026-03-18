@@ -20,9 +20,9 @@ import com.erarge.opevaontology.dto.demo3.Demo3FilterOptionsResponse;
 import com.erarge.opevaontology.dto.demo3.Demo3SummaryResponse;
 import com.erarge.opevaontology.dto.FilteredQueryRequest;
 import com.erarge.opevaontology.dto.TimeIntervalQueryRequest;
-import com.erarge.opevaontology.dto.demo2.Demo2HeatmapPointDTO;
-import com.erarge.opevaontology.dto.demo2.Demo2HeatmapResponseDTO;
-import com.erarge.opevaontology.dto.demo2.Demo2SummaryDTO;
+import com.erarge.opevaontology.dto.demo2.Demo2PowerPointDTO;
+import com.erarge.opevaontology.dto.demo2.Demo2PowerResponseDTO;
+import com.erarge.opevaontology.dto.demo2.Demo2PowerSummaryDTO;
 import com.erarge.opevaontology.dto.demo5.KpisResponse;
 import com.erarge.opevaontology.dto.demo5.RouteSizeDistributionDTO;
 import com.erarge.opevaontology.dto.demo5.RouteTimeWindowDTO;
@@ -277,83 +277,63 @@ public class ServiceImpl implements IService {
 
     @Override
     @SuppressWarnings("unchecked")
-    public Demo2HeatmapResponseDTO getDemo2Heatmap() {
-        String query = QueryBuilderDemo2.buildVoltageCurrentEfficiencyHeatmapQuery();
+    public Demo2PowerResponseDTO getDemo2PowerSeries() {
+        String query = QueryBuilderDemo2.buildVoltageCurrentPowerQuery();
         Object result = CustomSPARQL.sparqlQueryExecution(query);
         List<Map<String, String>> rows = (List<Map<String, String>>) result;
 
-        List<Demo2HeatmapPointDTO> points = rows.stream()
-            .map(this::toDemo2Point)
+        List<Demo2PowerPointDTO> points = rows.stream()
+            .map(this::toDemo2PowerPoint)
             .filter(p -> p != null)
-            .sorted(Comparator
-                .comparing(Demo2HeatmapPointDTO::getBattery, Comparator.nullsLast(String::compareTo))
-                .thenComparingDouble(Demo2HeatmapPointDTO::getvBinCenter)
-                .thenComparingDouble(Demo2HeatmapPointDTO::getaBinCenter))
+            .sorted(Comparator.comparing(Demo2PowerPointDTO::getTime, Comparator.nullsLast(String::compareTo)))
             .collect(Collectors.toList());
 
-        Demo2SummaryDTO summary = buildDemo2Summary(points);
-        return new Demo2HeatmapResponseDTO(summary, points);
+        Demo2PowerSummaryDTO summary = buildDemo2PowerSummary(points);
+        return new Demo2PowerResponseDTO(summary, points);
     }
 
-    private Demo2HeatmapPointDTO toDemo2Point(Map<String, String> row) {
-        Double vBinStart = tryParseDouble(stripDatatypeAndQuotes(row.get("V_bin_start")));
-        Double vBinEnd = tryParseDouble(stripDatatypeAndQuotes(row.get("V_bin_end")));
-        Double aBinStart = tryParseDouble(stripDatatypeAndQuotes(row.get("A_bin_start")));
-        Double aBinEnd = tryParseDouble(stripDatatypeAndQuotes(row.get("A_bin_end")));
-        Double vBinCenter = tryParseDouble(stripDatatypeAndQuotes(row.get("V_bin_center")));
-        Double aBinCenter = tryParseDouble(stripDatatypeAndQuotes(row.get("A_bin_center")));
-        Double avgEfficiency = tryParseDouble(stripDatatypeAndQuotes(row.get("avg_efficiency")));
-        Double sampleCountDouble = tryParseDouble(stripDatatypeAndQuotes(row.get("n_samples")));
+    private Demo2PowerPointDTO toDemo2PowerPoint(Map<String, String> row) {
+        String time = stripDatatypeAndQuotes(row.get("time"));
+        Double voltage = tryParseDouble(stripDatatypeAndQuotes(row.get("voltage")));
+        Double current = tryParseDouble(stripDatatypeAndQuotes(row.get("current")));
+        Double powerW = tryParseDouble(stripDatatypeAndQuotes(row.get("power_W")));
 
-        if (vBinStart == null || vBinEnd == null || aBinStart == null || aBinEnd == null ||
-            vBinCenter == null || aBinCenter == null || avgEfficiency == null || sampleCountDouble == null) {
+        if (time == null || time.isBlank() || voltage == null || current == null || powerW == null) {
             return null;
         }
 
-        return new Demo2HeatmapPointDTO(
-            stripDatatypeAndQuotes(row.get("battery")),
-            vBinStart,
-            vBinEnd,
-            aBinStart,
-            aBinEnd,
-            vBinCenter,
-            aBinCenter,
-            avgEfficiency,
-            Math.round(sampleCountDouble)
-        );
+        return new Demo2PowerPointDTO(time, voltage, current, powerW);
     }
 
-    private Demo2SummaryDTO buildDemo2Summary(List<Demo2HeatmapPointDTO> points) {
+    private Demo2PowerSummaryDTO buildDemo2PowerSummary(List<Demo2PowerPointDTO> points) {
         if (points == null || points.isEmpty()) {
-            return new Demo2SummaryDTO(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            return new Demo2PowerSummaryDTO(0, null, null, 0, 0, 0, 0, 0, 0, 0);
         }
 
-        Set<String> batteries = points.stream()
-            .map(Demo2HeatmapPointDTO::getBattery)
-            .filter(b -> b != null && !b.isBlank())
-            .collect(Collectors.toSet());
+        double minVoltage = points.stream().mapToDouble(Demo2PowerPointDTO::getVoltage).min().orElse(0);
+        double maxVoltage = points.stream().mapToDouble(Demo2PowerPointDTO::getVoltage).max().orElse(0);
 
-        double minVoltage = points.stream().mapToDouble(Demo2HeatmapPointDTO::getvBinStart).min().orElse(0);
-        double maxVoltage = points.stream().mapToDouble(Demo2HeatmapPointDTO::getvBinEnd).max().orElse(0);
-        double minCurrent = points.stream().mapToDouble(Demo2HeatmapPointDTO::getaBinStart).min().orElse(0);
-        double maxCurrent = points.stream().mapToDouble(Demo2HeatmapPointDTO::getaBinEnd).max().orElse(0);
-        double minEfficiency = points.stream().mapToDouble(Demo2HeatmapPointDTO::getAverageEfficiency).min().orElse(0);
-        double maxEfficiency = points.stream().mapToDouble(Demo2HeatmapPointDTO::getAverageEfficiency).max().orElse(0);
-        double weightedSum = points.stream().mapToDouble(p -> p.getAverageEfficiency() * p.getSampleCount()).sum();
-        long totalSamples = points.stream().mapToLong(Demo2HeatmapPointDTO::getSampleCount).sum();
-        double averageEfficiency = totalSamples > 0 ? (weightedSum / totalSamples) : 0;
+        double minCurrent = points.stream().mapToDouble(Demo2PowerPointDTO::getCurrent).min().orElse(0);
+        double maxCurrent = points.stream().mapToDouble(Demo2PowerPointDTO::getCurrent).max().orElse(0);
 
-        return new Demo2SummaryDTO(
-            batteries.size(),
+        double minPowerW = points.stream().mapToDouble(Demo2PowerPointDTO::getPowerW).min().orElse(0);
+        double maxPowerW = points.stream().mapToDouble(Demo2PowerPointDTO::getPowerW).max().orElse(0);
+        double averagePowerW = points.stream().mapToDouble(Demo2PowerPointDTO::getPowerW).average().orElse(0);
+
+        String startTime = points.stream().map(Demo2PowerPointDTO::getTime).min(String::compareTo).orElse(null);
+        String endTime = points.stream().map(Demo2PowerPointDTO::getTime).max(String::compareTo).orElse(null);
+
+        return new Demo2PowerSummaryDTO(
             points.size(),
+            startTime,
+            endTime,
             minVoltage,
             maxVoltage,
             minCurrent,
             maxCurrent,
-            minEfficiency,
-            maxEfficiency,
-            averageEfficiency,
-            totalSamples
+            minPowerW,
+            maxPowerW,
+            averagePowerW
         );
     }
 

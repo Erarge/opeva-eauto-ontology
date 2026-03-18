@@ -99,22 +99,6 @@
       align-items: center;
     }
 
-    .legend-scale {
-      height: 12px;
-      border-radius: 8px;
-      background: linear-gradient(90deg, #1d4ed8 0%, #22c55e 50%, #f59e0b 75%, #dc2626 100%);
-      border: 1px solid #d1d5db;
-      margin-top: 8px;
-    }
-
-    .legend-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.85rem;
-      color: #6c757d;
-      margin-top: 6px;
-    }
-
     .empty-state {
       padding: 20px;
       text-align: center;
@@ -153,11 +137,9 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1>Demo 2: Developing a Battery Pack with Smart BMS, Simulation on HIL system Test and Perform Physical Test with
-        Battery Pack Test Machine</h1>
+      <h1>Demo 2: Developing a Battery Pack with Smart BMS, Simulation on HIL system Test and Perform Physical Test with Battery Pack Test Machine</h1>
       <p>
-        Validation of the Effectiveness of the OPEVA: (i) Energy-efficient drivetrain, (ii) Accurate range prediction
-        and (iii) Efficient charging technologies.
+        Validation of the Effectiveness of the OPEVA: (i) Energy-efficient drivetrain, (ii) Accurate range prediction and (iii) Efficient charging technologies.
       </p>
       <div class="figures-row">
         <figure class="figure w45">
@@ -181,31 +163,15 @@
       <div id="success-message" class="success" style="display:none;"></div>
 
       <div class="form-section">
-        <h2>Efficiency heatmap explorer</h2>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="batterySelect">Battery</label>
-            <select id="batterySelect">
-              <option value="">All batteries</option>
-            </select>
-          </div>
-        </div>
+        <h2>Power time-series explorer</h2>
         <div class="button-group">
-          <button class="btn-secondary" id="btnReset">Reset filter</button>
+          <button class="btn-secondary" id="btnReset">Reload data</button>
           <button class="btn-secondary" id="btnDownloadCsv">Download CSV</button>
           <button class="btn-secondary" id="btnDownloadJson">Download JSON</button>
         </div>
       </div>
 
       <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-label">Batteries</div>
-          <div class="kpi-value" id="kpiBatteryCount">-</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Heatmap bins</div>
-          <div class="kpi-value" id="kpiPointCount">-</div>
-        </div>
         <div class="kpi-card">
           <div class="kpi-label">Total samples</div>
           <div class="kpi-value" id="kpiSampleCount">-</div>
@@ -219,8 +185,8 @@
           <div class="kpi-value" id="kpiCurrentRange">-</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Average efficiency</div>
-          <div class="kpi-value" id="kpiAvgEfficiency">-</div>
+          <div class="kpi-label">Power range</div>
+          <div class="kpi-value" id="kpiPowerRange">-</div>
         </div>
       </div>
 
@@ -232,475 +198,369 @@
         <div class="info-card">
           <h3 class="section-title">Dataset notes</h3>
           <div id="datasetMeta" class="muted">No data loaded yet.</div>
-          <div class="legend-scale"></div>
-          <div class="legend-labels"><span>Lower efficiency</span><span>Higher efficiency</span></div>
         </div>
       </div>
 
       <div class="chart-card" style="margin-top:24px;">
-        <h3 class="section-title">Efficiency heatmap (Voltage × Current)</h3>
-        <div class="chart-wrap"><canvas id="heatmapChart"></canvas></div>
+        <h3 class="section-title">Power over Time</h3>
+        <div class="chart-wrap">
+          <canvas id="powerChart"></canvas>
+        </div>
         <div class="meta-row">
-          <span>X axis: Primary Voltage bin center (V)</span>
-          <span>Y axis: Primary Current bin center (A)</span>
-          <span id="heatmapMeta"></span>
+          <span>X axis: Time</span>
+          <span>Y axis: Power (W)</span>
+          <span id="powerMeta"></span>
         </div>
       </div>
 
       <div class="form-section" style="margin-top: 28px;">
-        <h2>Raw heatmap bins</h2>
+        <h2>Raw power time-series data</h2>
         <div class="toolbar-inline">
           <span class="muted" id="tableMeta"></span>
         </div>
         <div class="table-container" id="tableHost"></div>
       </div>
     </div>
+  </div>
 
-    <script>
-      const API_BASE_URL = '';
-      const DEFAULT_QUERY = `PREFIX :     <https://cloud.erarge.com.tr/ontologies/eauto#>
+  <script>
+    const API_BASE_URL = '';
+
+    const DEFAULT_QUERY = `PREFIX :     <https://cloud.erarge.com.tr/ontologies/eauto#>
 PREFIX sosa: <http://www.w3.org/ns/sosa/>
-PREFIX bif:  <bif:>
 PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
 
 SELECT
-  ?battery
-  (?Vbin * ?dV                 AS ?V_bin_start)
-  ((?Vbin + 1) * ?dV           AS ?V_bin_end)
-  (?Abin * ?dA                 AS ?A_bin_start)
-  ((?Abin + 1) * ?dA           AS ?A_bin_end)
-  ((?Vbin + 0.5) * ?dV         AS ?V_bin_center)
-  ((?Abin + 0.5) * ?dA         AS ?A_bin_center)
-  (AVG(?eff)                   AS ?avg_efficiency)
-  (COUNT(*)                    AS ?n_samples)
+  ?time
+  ?voltage
+  ?current
+  (?voltage * ?current AS ?power_W)
 WHERE {
   GRAPH <https://cloud.erarge.com.tr/ontologies/eauto> {
-    BIND(5.0  AS ?dV)
-    BIND(1.0  AS ?dA)
-
-    ?obsE a sosa:Observation ;
-          sosa:hasFeatureOfInterest ?b ;
-          sosa:observedProperty :op_efficiency ;
-          sosa:hasSimpleResult ?eRaw ;
-          sosa:resultTime ?time .
 
     ?obsV a sosa:Observation ;
-          sosa:hasFeatureOfInterest ?b ;
-          sosa:observedProperty :op_v_pri_v ;
+          sosa:observedProperty :module_voltage ;
+          sosa:hasFeatureOfInterest ?interest ;
           sosa:hasSimpleResult ?vRaw ;
-          sosa:resultTime ?time .
+          sosa:resultTime ?time ;
+          sosa:madeBySensor ?sensor .
 
     ?obsA a sosa:Observation ;
-          sosa:hasFeatureOfInterest ?b ;
-          sosa:observedProperty :op_a_pri_a ;
-          sosa:hasSimpleResult ?aRaw ;
-          sosa:resultTime ?time .
+          sosa:observedProperty :cell_current ;
+          sosa:hasFeatureOfInterest :Battery_1 ;
+          sosa:hasSimpleResult ?currRaw ;
+          sosa:resultTime ?time ;
+          sosa:madeBySensor ?sensor .
 
-    FILTER(isNumeric(?eRaw) && isNumeric(?vRaw) && isNumeric(?aRaw))
-    BIND(xsd:double(?eRaw) AS ?eff)
-    BIND(xsd:double(?vRaw) AS ?vPri)
-    BIND(xsd:double(?aRaw) AS ?aPri)
-    FILTER(?vPri > 0.0)
-
-    BIND(bif:floor(?vPri / ?dV) AS ?Vbin)
-    BIND(bif:floor(?aPri / ?dA) AS ?Abin)
-    BIND(REPLACE(STR(?b), "^.*(#|/)", "") AS ?battery)
+    BIND(xsd:double(?vRaw) AS ?voltage)
+    BIND(REPLACE(STR(?currRaw), " ", "") AS ?currNoSpace)
+    FILTER(CONTAINS(?currNoSpace, "/"))
+    BIND(STRBEFORE(?currNoSpace, "/") AS ?leftPart)
+    BIND(xsd:double(?leftPart) AS ?current)
   }
 }
-GROUP BY ?battery ?Vbin ?Abin ?dV ?dA
-ORDER BY ?battery ?Vbin ?Abin`;
+ORDER BY ?time`;
 
-      let allDataset = { summary: null, points: [] };
-      let currentDataset = { summary: null, points: [] };
-      let heatmapChart = null;
+    let allDataset = { summary: null, points: [] };
+    let currentDataset = { summary: null, points: [] };
+    let powerChart = null;
 
-      const UI_IDS = {
-        battery: 'batterySelect',
-        queryText: 'queryText',
-        errorMessage: 'error-message',
-        successMessage: 'success-message',
-        datasetMeta: 'datasetMeta',
-        heatmapMeta: 'heatmapMeta',
-        tableMeta: 'tableMeta',
-        tableHost: 'tableHost'
-      };
+    const UI_IDS = {
+      queryText: 'queryText',
+      errorMessage: 'error-message',
+      successMessage: 'success-message',
+      datasetMeta: 'datasetMeta',
+      powerMeta: 'powerMeta',
+      tableMeta: 'tableMeta',
+      tableHost: 'tableHost'
+    };
 
-      function el(id) { return document.getElementById(id); }
-      function batteryEl() { return el(UI_IDS.battery); }
+    function el(id) {
+      return document.getElementById(id);
+    }
 
-      function showError(message) {
-        el(UI_IDS.errorMessage).textContent = message || 'An unexpected error occurred.';
-        el(UI_IDS.errorMessage).style.display = 'block';
-        el(UI_IDS.successMessage).style.display = 'none';
+    function showError(message) {
+      el(UI_IDS.errorMessage).textContent = message || 'An unexpected error occurred.';
+      el(UI_IDS.errorMessage).style.display = 'block';
+      el(UI_IDS.successMessage).style.display = 'none';
+    }
+
+    function showSuccess(message) {
+      el(UI_IDS.successMessage).textContent = message || '';
+      el(UI_IDS.successMessage).style.display = 'block';
+      el(UI_IDS.errorMessage).style.display = 'none';
+    }
+
+    function hideMessages() {
+      el(UI_IDS.errorMessage).style.display = 'none';
+      el(UI_IDS.successMessage).style.display = 'none';
+    }
+
+    async function httpGet(url) {
+      const response = await fetch(url, { method: 'GET' });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} @ ${url}`);
+      }
+      return await response.json();
+    }
+
+    function toNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function formatNumber(value, digits = 2) {
+      const n = toNumber(value);
+      return n !== null ? n.toFixed(digits) : '-';
+    }
+
+    function formatRange(min, max, unit = '', digits = 2) {
+      const minNum = toNumber(min);
+      const maxNum = toNumber(max);
+      if (minNum === null || maxNum === null) {
+        return '-';
+      }
+      return `${formatNumber(minNum, digits)} - ${formatNumber(maxNum, digits)} ${unit}`.trim();
+    }
+
+    function setKpi(id, value) {
+      const target = document.getElementById(id);
+      if (target) {
+        target.textContent = value;
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function destroyChart() {
+      if (powerChart) {
+        powerChart.destroy();
+        powerChart = null;
+      }
+    }
+
+    function normalizePoints(points) {
+      if (!Array.isArray(points)) return [];
+      return points
+        .map((point) => ({
+          time: point?.time ?? '',
+          voltage: toNumber(point?.voltage),
+          current: toNumber(point?.current),
+          powerW: toNumber(point?.powerW)
+        }))
+        .filter((point) =>
+          point.time &&
+          point.voltage !== null &&
+          point.current !== null &&
+          point.powerW !== null
+        );
+    }
+
+    function renderSummary(summary, points) {
+      setKpi('kpiSampleCount', summary?.sampleCount ?? 0);
+      setKpi('kpiVoltageRange', formatRange(summary?.minVoltage, summary?.maxVoltage, 'V', 2));
+      setKpi('kpiCurrentRange', formatRange(summary?.minCurrent, summary?.maxCurrent, 'A', 2));
+      setKpi('kpiPowerRange', formatRange(summary?.minPowerW, summary?.maxPowerW, 'W', 2));
+
+      const startTime = summary?.startTime || '-';
+      const endTime = summary?.endTime || '-';
+      const avgPower = formatNumber(summary?.averagePowerW, 2);
+
+      el(UI_IDS.datasetMeta).textContent = points.length
+        ? `Loaded ${points.length} power samples. Time range: ${startTime} → ${endTime}. Average power: ${avgPower} W.`
+        : 'No power data loaded.';
+    }
+
+    function renderChart(points) {
+      destroyChart();
+
+      if (!points.length) {
+        el(UI_IDS.powerMeta).textContent = '0 samples';
+        return;
       }
 
-      function showSuccess(message) {
-        el(UI_IDS.successMessage).textContent = message || '';
-        el(UI_IDS.successMessage).style.display = 'block';
-        el(UI_IDS.errorMessage).style.display = 'none';
+      const canvas = el('powerChart');
+      if (!canvas) {
+        showError('Chart canvas not found.');
+        return;
       }
 
-      function hideMessages() {
-        el(UI_IDS.errorMessage).style.display = 'none';
-        el(UI_IDS.successMessage).style.display = 'none';
-      }
+      const ctx = canvas.getContext('2d');
 
-      async function httpGet(url) {
-        const response = await fetch(url, { method: 'GET' });
-        if (!response.ok) throw new Error(`HTTP ${response.status} @ ${url}`);
-        return await response.json();
-      }
-
-      function formatNumber(value, digits = 2) {
-        return Number.isFinite(value) ? Number(value).toFixed(digits) : '-';
-      }
-
-      function formatRange(minV, maxV, unit, digits = 2) {
-        if (!Number.isFinite(minV) || !Number.isFinite(maxV)) return '-';
-        return `${formatNumber(minV, digits)} - ${formatNumber(maxV, digits)} ${unit}`;
-      }
-
-      function setKpi(id, value) {
-        const target = el(id);
-        if (target) target.textContent = value;
-      }
-
-      function fillSelect(selectId, values, placeholder, formatter = v => v) {
-        const select = el(selectId);
-        if (!select) return;
-        const current = select.value;
-        select.innerHTML = '';
-        const first = document.createElement('option');
-        first.value = '';
-        first.textContent = placeholder;
-        select.appendChild(first);
-        (values || []).forEach((value) => {
-          const option = document.createElement('option');
-          option.value = value;
-          option.textContent = formatter(value);
-          select.appendChild(option);
-        });
-        const canRestore = [...select.options].some(opt => opt.value === current);
-        if (canRestore) select.value = current;
-      }
-
-      function getBatteryOptionsFromDataset() {
-        return [...new Set((allDataset.points || []).map(p => String(p.battery ?? '')))]
-          .filter(Boolean)
-          .sort();
-      }
-
-      function refreshBatteryOptions() {
-        const selected = batteryEl()?.value || '';
-        fillSelect(UI_IDS.battery, getBatteryOptionsFromDataset(), 'All batteries');
-        if (batteryEl()) batteryEl().value = selected;
-      }
-
-      function updateQueryPreview() {
-        const battery = batteryEl()?.value || '';
-        const preview = [DEFAULT_QUERY];
-        if (battery) preview.push(`\n# Filtered battery: ${battery}`);
-        el(UI_IDS.queryText).textContent = preview.join('');
-      }
-
-      function getFilteredPoints() {
-        const selectedBattery = batteryEl()?.value || '';
-        return (allDataset.points || []).filter(point => !selectedBattery || String(point.battery ?? '') === selectedBattery);
-      }
-
-      function buildSummaryFromPoints(points) {
-        if (!points.length) {
-          return { batteryCount: 0, pointCount: 0, totalSamples: 0, minVoltage: null, maxVoltage: null, minCurrent: null, maxCurrent: null, averageEfficiency: null, minEfficiency: null, maxEfficiency: null };
-        }
-
-        const batteries = new Set(points.map(p => String(p.battery ?? '')).filter(Boolean));
-        const totalSamples = points.reduce((sum, p) => sum + Number(p.sampleCount || 0), 0);
-        const weightedSum = points.reduce((sum, p) => sum + (Number(p.averageEfficiency || 0) * Number(p.sampleCount || 0)), 0);
-
-        return {
-          batteryCount: batteries.size,
-          pointCount: points.length,
-          totalSamples,
-          minVoltage: Math.min(...points.map(p => Number(p.vBinStart))),
-          maxVoltage: Math.max(...points.map(p => Number(p.vBinEnd))),
-          minCurrent: Math.min(...points.map(p => Number(p.aBinStart))),
-          maxCurrent: Math.max(...points.map(p => Number(p.aBinEnd))),
-          minEfficiency: Math.min(...points.map(p => Number(p.averageEfficiency))),
-          maxEfficiency: Math.max(...points.map(p => Number(p.averageEfficiency))),
-          averageEfficiency: totalSamples > 0 ? (weightedSum / totalSamples) : null
-        };
-      }
-
-      function clamp01(value) {
-        return Math.max(0, Math.min(1, value));
-      }
-
-      function lerp(a, b, t) {
-        return Math.round(a + (b - a) * t);
-      }
-
-      function efficiencyColor(value, min, max) {
-        if (!Number.isFinite(value)) return 'rgba(107, 114, 128, 0.75)';
-        const span = max - min;
-        const t = span > 0 ? clamp01((value - min) / span) : 0.5;
-
-        const stops = [
-          { t: 0.00, c: [29, 78, 216] },
-          { t: 0.50, c: [34, 197, 94] },
-          { t: 0.75, c: [245, 158, 11] },
-          { t: 1.00, c: [220, 38, 38] }
-        ];
-
-        let left = stops[0];
-        let right = stops[stops.length - 1];
-        for (let i = 0; i < stops.length - 1; i++) {
-          if (t >= stops[i].t && t <= stops[i + 1].t) {
-            left = stops[i];
-            right = stops[i + 1];
-            break;
-          }
-        }
-
-        const localT = (t - left.t) / (right.t - left.t || 1);
-        const rgb = [
-          lerp(left.c[0], right.c[0], localT),
-          lerp(left.c[1], right.c[1], localT),
-          lerp(left.c[2], right.c[2], localT)
-        ];
-        return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.88)`;
-      }
-
-      function destroyChart() {
-        if (heatmapChart) {
-          heatmapChart.destroy();
-          heatmapChart = null;
-        }
-      }
-
-      function renderChart(points, summary) {
-        if (!points.length) {
-          destroyChart();
-          el(UI_IDS.heatmapMeta).textContent = '0 bins';
-          return;
-        }
-
-        const ctx = el('heatmapChart').getContext('2d');
-        destroyChart();
-
-        const minEff = Number(summary.minEfficiency);
-        const maxEff = Number(summary.maxEfficiency);
-        const minSamples = Math.min(...points.map(p => Number(p.sampleCount || 0)));
-        const maxSamples = Math.max(...points.map(p => Number(p.sampleCount || 0)));
-
-        const datasets = points.map((point) => {
-          const sampleCount = Number(point.sampleCount || 0);
-          const sizeScale = maxSamples > minSamples ? ((sampleCount - minSamples) / (maxSamples - minSamples)) : 0.5;
-          const pointRadius = 10 + (sizeScale * 12);
-
-          return {
-            label: `${point.battery} | V ${point.vBinStart}-${point.vBinEnd} | A ${point.aBinStart}-${point.aBinEnd}`,
-            data: [{ x: Number(point.vBinCenter), y: Number(point.aBinCenter) }],
-            pointStyle: 'rectRounded',
-            pointRadius,
-            pointHoverRadius: pointRadius + 2,
-            pointBackgroundColor: efficiencyColor(Number(point.averageEfficiency), minEff, maxEff),
-            pointBorderColor: 'rgba(17, 24, 39, 0.35)',
-            pointBorderWidth: 1,
-            showLine: false,
-            parsing: false,
-            extra: point
-          };
-        });
-
-        heatmapChart = new Chart(ctx, {
-          type: 'scatter',
-          data: { datasets },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  title(items) {
-                    const extra = items?.[0]?.dataset?.extra;
-                    return extra?.battery ? `${extra.battery}` : 'Heatmap bin';
-                  },
-                  label(item) {
-                    const p = item.dataset.extra;
-                    return [
-                      `Voltage bin: ${formatNumber(p.vBinStart, 2)} - ${formatNumber(p.vBinEnd, 2)} V`,
-                      `Current bin: ${formatNumber(p.aBinStart, 2)} - ${formatNumber(p.aBinEnd, 2)} A`,
-                      `Avg efficiency: ${formatNumber(p.averageEfficiency, 4)}`,
-                      `Samples: ${p.sampleCount}`
-                    ];
-                  }
+      powerChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: points.map((p) => p.time),
+          datasets: [
+            {
+              label: 'Power (W)',
+              data: points.map((p) => p.powerW),
+              borderWidth: 2,
+              tension: 0.2,
+              pointRadius: 0,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: { display: true },
+            tooltip: {
+              callbacks: {
+                label(context) {
+                  return `Power: ${formatNumber(context.parsed.y, 4)} W`;
                 }
               }
-            },
-            scales: {
-              x: {
-                title: { display: true, text: 'Primary Voltage bin center (V)' },
-                grid: { color: 'rgba(0,0,0,0.06)' }
+            }
+          },
+          scales: {
+            x: {
+              title: { display: true, text: 'Time' },
+              ticks: {
+                maxTicksLimit: 10,
+                maxRotation: 45,
+                minRotation: 0
               },
-              y: {
-                title: { display: true, text: 'Primary Current bin center (A)' },
-                grid: { color: 'rgba(0,0,0,0.06)' }
-              }
+              grid: { color: 'rgba(0,0,0,0.06)' }
+            },
+            y: {
+              title: { display: true, text: 'Power (W)' },
+              grid: { color: 'rgba(0,0,0,0.06)' }
             }
           }
-        });
-
-        el(UI_IDS.heatmapMeta).textContent = `${points.length} bins | ${summary.totalSamples || 0} total samples`;
-      }
-
-      function escapeHtml(value) {
-        return String(value ?? '')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#39;');
-      }
-
-      function renderTable(points) {
-        const host = el(UI_IDS.tableHost);
-        const battery = batteryEl()?.value || '';
-
-        if (!points.length) {
-          host.innerHTML = '<div class="empty-state">No heatmap bins found for the selected battery.</div>';
-          el(UI_IDS.tableMeta).textContent = `0 rows${battery ? ` | Battery: ${battery}` : ''}`;
-          return;
         }
+      });
 
-        const rows = points.map((point) => `
+      el(UI_IDS.powerMeta).textContent = `${points.length} samples`;
+    }
+
+    function renderTable(points) {
+      const host = el(UI_IDS.tableHost);
+
+      if (!points.length) {
+        host.innerHTML = '<div class="empty-state">No power samples found.</div>';
+        el(UI_IDS.tableMeta).textContent = '0 rows';
+        return;
+      }
+
+      const rows = points.map((point) => `
         <tr>
-          <td>${escapeHtml(point.battery)}</td>
-          <td>${escapeHtml(formatNumber(point.vBinStart, 2))}</td>
-          <td>${escapeHtml(formatNumber(point.vBinEnd, 2))}</td>
-          <td>${escapeHtml(formatNumber(point.aBinStart, 2))}</td>
-          <td>${escapeHtml(formatNumber(point.aBinEnd, 2))}</td>
-          <td>${escapeHtml(formatNumber(point.vBinCenter, 2))}</td>
-          <td>${escapeHtml(formatNumber(point.aBinCenter, 2))}</td>
-          <td>${escapeHtml(formatNumber(point.averageEfficiency, 4))}</td>
-          <td>${escapeHtml(point.sampleCount)}</td>
+          <td>${escapeHtml(point.time)}</td>
+          <td>${escapeHtml(formatNumber(point.voltage, 4))}</td>
+          <td>${escapeHtml(formatNumber(point.current, 4))}</td>
+          <td>${escapeHtml(formatNumber(point.powerW, 4))}</td>
         </tr>
       `).join('');
 
-        host.innerHTML = `
+      host.innerHTML = `
         <table>
           <thead>
             <tr>
-              <th>Battery</th>
-              <th>V Bin Start</th>
-              <th>V Bin End</th>
-              <th>A Bin Start</th>
-              <th>A Bin End</th>
-              <th>V Bin Center</th>
-              <th>A Bin Center</th>
-              <th>Avg Efficiency</th>
-              <th>Samples</th>
+              <th>Time</th>
+              <th>Voltage (V)</th>
+              <th>Current (A)</th>
+              <th>Power (W)</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
         </table>
       `;
 
-        el(UI_IDS.tableMeta).textContent = `${points.length} rows${battery ? ` | Battery: ${battery}` : ''}`;
+      el(UI_IDS.tableMeta).textContent = `${points.length} rows`;
+    }
+
+    async function loadDataset() {
+      hideMessages();
+      el(UI_IDS.queryText).textContent = DEFAULT_QUERY;
+
+      const data = await httpGet(`${API_BASE_URL}/api/demo2/power-series`);
+      allDataset = data || { summary: null, points: [] };
+      allDataset.points = normalizePoints(allDataset.points);
+
+      currentDataset = allDataset;
+
+      renderSummary(currentDataset.summary || {}, currentDataset.points);
+      renderChart(currentDataset.points);
+      renderTable(currentDataset.points);
+
+      showSuccess(
+        currentDataset.points.length
+          ? `Showing ${currentDataset.points.length} samples.`
+          : 'No samples found.'
+      );
+    }
+
+    function downloadFile(filename, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadCsv() {
+      const points = Array.isArray(currentDataset.points) ? currentDataset.points : [];
+      if (!points.length) {
+        showError('No dataset available for CSV export.');
+        return;
       }
 
-      function renderSummary(summary, points) {
-        setKpi('kpiBatteryCount', summary.batteryCount ?? 0);
-        setKpi('kpiPointCount', summary.pointCount ?? 0);
-        setKpi('kpiSampleCount', summary.totalSamples ?? 0);
-        setKpi('kpiVoltageRange', formatRange(summary.minVoltage, summary.maxVoltage, 'V', 2));
-        setKpi('kpiCurrentRange', formatRange(summary.minCurrent, summary.maxCurrent, 'A', 2));
-        setKpi('kpiAvgEfficiency', Number.isFinite(summary.averageEfficiency) ? formatNumber(summary.averageEfficiency, 4) : '-');
+      const header = ['time', 'voltage', 'current', 'powerW'];
+      const lines = points.map((p) => header.map((h) => JSON.stringify(p[h] ?? '')).join(','));
+      downloadFile(
+        'demo2_power_series.csv',
+        [header.join(','), ...lines].join('\n'),
+        'text/csv;charset=utf-8;'
+      );
+    }
 
-        const battery = batteryEl()?.value || '';
-        el(UI_IDS.datasetMeta).textContent = points.length
-          ? `Loaded ${points.length} heatmap bins${battery ? ` for ${battery}` : ''}. Cell colour represents average efficiency and marker size reflects sample count.`
-          : 'No data loaded for the selected battery.';
+    function downloadJson() {
+      const points = Array.isArray(currentDataset.points) ? currentDataset.points : [];
+      if (!points.length) {
+        showError('No dataset available for JSON export.');
+        return;
       }
 
-      function applyCurrentFilterAndRender() {
-        const filteredPoints = getFilteredPoints();
-        const filteredSummary = buildSummaryFromPoints(filteredPoints);
-        currentDataset = { summary: filteredSummary, points: filteredPoints };
-        updateQueryPreview();
-        renderSummary(filteredSummary, filteredPoints);
-        renderChart(filteredPoints, filteredSummary);
-        renderTable(filteredPoints);
-        showSuccess(filteredPoints.length
-          ? `Showing ${filteredPoints.length} filtered heatmap bins.`
-          : 'No heatmap bins matched the selected battery.');
-      }
+      downloadFile(
+        'demo2_power_series.json',
+        JSON.stringify(currentDataset, null, 2),
+        'application/json;charset=utf-8;'
+      );
+    }
 
-      async function loadDataset() {
-        hideMessages();
-        updateQueryPreview();
-        const data = await httpGet(`${API_BASE_URL}/api/demo2/heatmap`);
-        allDataset = data || { summary: null, points: [] };
-        if (!Array.isArray(allDataset.points)) allDataset.points = [];
-        refreshBatteryOptions();
-        applyCurrentFilterAndRender();
-      }
+    function bindEvents() {
+      el('btnReset')?.addEventListener('click', loadDataset);
+      el('btnDownloadCsv')?.addEventListener('click', downloadCsv);
+      el('btnDownloadJson')?.addEventListener('click', downloadJson);
+    }
 
-      function downloadFile(filename, content, mimeType) {
-        const blob = new Blob([content], { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        bindEvents();
+        await loadDataset();
+      } catch (error) {
+        console.error(error);
+        showError(error?.message || 'Demo 2 failed to load.');
       }
-
-      function downloadCsv() {
-        const points = Array.isArray(currentDataset.points) ? currentDataset.points : [];
-        if (!points.length) {
-          showError('No filtered dataset available for CSV export.');
-          return;
-        }
-        const header = ['battery', 'vBinStart', 'vBinEnd', 'aBinStart', 'aBinEnd', 'vBinCenter', 'aBinCenter', 'averageEfficiency', 'sampleCount'];
-        const lines = points.map((p) => header.map((h) => JSON.stringify(p[h] ?? '')).join(','));
-        downloadFile('demo2_heatmap.csv', [header.join(','), ...lines].join('\n'), 'text/csv;charset=utf-8;');
-      }
-
-      function downloadJson() {
-        const points = Array.isArray(currentDataset.points) ? currentDataset.points : [];
-        if (!points.length) {
-          showError('No filtered dataset available for JSON export.');
-          return;
-        }
-        downloadFile('demo2_heatmap.json', JSON.stringify(currentDataset, null, 2), 'application/json;charset=utf-8;');
-      }
-
-      function resetFilter() {
-        if (batteryEl()) batteryEl().value = '';
-        applyCurrentFilterAndRender();
-      }
-
-      function bindEvents() {
-        batteryEl()?.addEventListener('change', applyCurrentFilterAndRender);
-        el('btnReset')?.addEventListener('click', resetFilter);
-        el('btnDownloadCsv')?.addEventListener('click', downloadCsv);
-        el('btnDownloadJson')?.addEventListener('click', downloadJson);
-      }
-
-      window.addEventListener('DOMContentLoaded', async () => {
-        try {
-          el(UI_IDS.queryText).textContent = DEFAULT_QUERY;
-          bindEvents();
-          await loadDataset();
-        } catch (error) {
-          console.error(error);
-          showError(error?.message || 'Demo 2 failed to load.');
-        }
-      });
-    </script>
+    });
+  </script>
 </body>
 
 </html>

@@ -6,7 +6,7 @@ import java.util.Map;
 import com.erarge.opevaontology.dto.FilterOptionsResponse;
 import com.erarge.opevaontology.dto.FilteredQueryRequest;
 import com.erarge.opevaontology.dto.TimeIntervalQueryRequest;
-import com.erarge.opevaontology.dto.demo2.Demo2HeatmapResponseDTO;
+import com.erarge.opevaontology.dto.demo2.Demo2PowerResponseDTO;
 import com.erarge.opevaontology.dto.demo3.Demo3DatasetResponse;
 import com.erarge.opevaontology.dto.demo3.Demo3FilterOptionsResponse;
 import com.erarge.opevaontology.dto.demo5.KpisResponse;
@@ -28,7 +28,7 @@ public interface IService {
 
     Demo3DatasetResponse getDemo3Dataset(String battery, Double soc);
 
-    Demo2HeatmapResponseDTO getDemo2Heatmap();
+    Demo2PowerResponseDTO getDemo2PowerSeries();
 
     KpisResponse getKpis();
     List<RouteSizeDistributionDTO> getRouteMixSizeDistribution();
