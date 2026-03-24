@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,26 +10,48 @@
 </head>
 
 <body>
+  <div class="topbar">
+    <a class="back-link" href="../index.html">← Back</a>
+  </div>
+
   <div class="container">
     <div class="header">
       <h1>Modular batteries storage based second-life EV module variants</h1>
       <p>
-        A high volume of EV batteries reaches their first end of life every year when they resume their 70-80% state of health (SoH). At this juncture, EV manufacturers face three options for the used batteries: recycling, disposing, or reusing them in their second life. Reutilization of EV batteries in their second life provides the most economical and environmental-friendly option for EV manufacturers. In demonstration 7, we propose using second-life batteries as an energy storage solution (ESS) in an EV charger station with photovoltaic panels and a utility grid connection. The system supports AC/DC charging of two EVs simultaneously. The energy management controller (EMS) manages the AC/DC conversion for DC charging of battery modules and AC charging of EVs via the power grid. The battery management system (BMS) manages second-life LiFePO4 (LFP) battery modules with varying capacities.
+        A high volume of EV batteries reaches their first end of life every year when they resume their 70-80% state of
+        health (SoH). At this juncture, EV manufacturers face three options for the used batteries: recycling,
+        disposing, or reusing them in their second life. Reutilization of EV batteries in their second life provides the
+        most economical and environmental-friendly option for EV manufacturers. In demonstration 7, we propose using
+        second-life batteries as an energy storage solution (ESS) in an EV charger station with photovoltaic panels and
+        a utility grid connection. The system supports AC/DC charging of two EVs simultaneously. The energy management
+        controller (EMS) manages the AC/DC conversion for DC charging of battery modules and AC charging of EVs via the
+        power grid. The battery management system (BMS) manages second-life LiFePO4 (LFP) battery modules with varying
+        capacities.
 
-The system’s primary components include the second-life battery modules, the energy management system (EMS) and the battery management system (BMS), power utility grid connection and solar photovoltaic cells, AC/DC charging units, and data provisioning. The demonstration aims to reduce the cost of EV Charger, prolong the life of LFP batteries and improve energy efficiency.
+        The system’s primary components include the second-life battery modules, the energy management system (EMS) and
+        the battery management system (BMS), power utility grid connection and solar photovoltaic cells, AC/DC charging
+        units, and data provisioning. The demonstration aims to reduce the cost of EV Charger, prolong the life of LFP
+        batteries and improve energy efficiency.
 
-ORTEM has been working in collaboration with AI4Sec for AI / ML algorithm development for SoC/SoH estimation on BMS of the EV charger station.  We are also cooperating with CERTX on both the analysis and implementation of functional safety measures. This partnership involves a comprehensive review of the architecture, technical specification, hazard analysis and risk assessment, and derive safety goals.
+        ORTEM has been working in collaboration with AI4Sec for AI / ML algorithm development for SoC/SoH estimation on
+        BMS of the EV charger station. We are also cooperating with CERTX on both the analysis and implementation of
+        functional safety measures. This partnership involves a comprehensive review of the architecture, technical
+        specification, hazard analysis and risk assessment, and derive safety goals.
 
-The proposed system aims to reduce charging station expenses, enhance energy efficiency, and prolong the range and lifespan of the battery. The widespread adoption of second-life batteries will bolster driver confidence, lower EV costs, foster greater acceptance of electric vehicles, and contribute to the EU’s carbon neutrality initiatives.
+        The proposed system aims to reduce charging station expenses, enhance energy efficiency, and prolong the range
+        and lifespan of the battery. The widespread adoption of second-life batteries will bolster driver confidence,
+        lower EV costs, foster greater acceptance of electric vehicles, and contribute to the EU’s carbon neutrality
+        initiatives.
       </p>
       <div class="figures-row">
         <figure class="figure w45">
           <img src="../img/demo7-1.webp" alt="Demonstration 7 Architecture" class="header-img" />
           <figcaption class="figure-caption">Figure 1: Demonstration 7 Architecture</figcaption>
         </figure>
-        
+
         <figure class="figure w45">
-          <img src="../img/demo7-2.webp" alt="Second-life Battery Pack System" class="header-img" style="max-height: 330px;" />
+          <img src="../img/demo7-2.webp" alt="Second-life Battery Pack System" class="header-img"
+            style="max-height: 330px;" />
           <figcaption class="figure-caption">Figure 2: Second-life Battery Pack System</figcaption>
         </figure>
       </div>
@@ -186,7 +209,7 @@ The proposed system aims to reduce charging station expenses, enhance energy eff
 
     function fmtBytes(bytes) {
       if (!Number.isFinite(bytes)) return '-';
-      const units = ['B','KB','MB','GB'];
+      const units = ['B', 'KB', 'MB', 'GB'];
       let u = 0, b = bytes;
       while (b >= 1024 && u < units.length - 1) { b /= 1024; u++; }
       return `${b.toFixed(u === 0 ? 0 : 2)} ${units[u]}`;
@@ -619,7 +642,7 @@ The proposed system aims to reduce charging station expenses, enhance energy eff
             legend: { display: true, position: 'top' },
             tooltip: {
               callbacks: {
-                label: function(context) {
+                label: function (context) {
                   const label = context.dataset.label || '';
                   const eff = Number.isFinite(context.parsed.y) ? context.parsed.y.toFixed(2) : 'N/A';
                   const pwr = Number.isFinite(context.parsed.x) ? context.parsed.x.toFixed(2) : 'N/A';
@@ -810,4 +833,5 @@ The proposed system aims to reduce charging station expenses, enhance energy eff
     }
   </script>
 </body>
+
 </html>

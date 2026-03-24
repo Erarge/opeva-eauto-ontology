@@ -6,7 +6,8 @@ public class Demo3DatasetResponse {
     private Demo3SummaryResponse summary;
     private List<Demo3EisPointDTO> points;
 
-    public Demo3DatasetResponse() {}
+    public Demo3DatasetResponse() {
+    }
 
     public Demo3DatasetResponse(Demo3SummaryResponse summary, List<Demo3EisPointDTO> points) {
         this.summary = summary;

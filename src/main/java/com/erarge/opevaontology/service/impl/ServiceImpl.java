@@ -14,6 +14,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.erarge.opevaontology.dto.FilterOptionsResponse;
+import com.erarge.opevaontology.dto.demo1.Demo1BalancingPointDTO;
+import com.erarge.opevaontology.dto.demo1.Demo1BalancingResponseDTO;
+import com.erarge.opevaontology.dto.demo1.Demo1BalancingSummaryDTO;
 import com.erarge.opevaontology.dto.demo3.Demo3DatasetResponse;
 import com.erarge.opevaontology.dto.demo3.Demo3EisPointDTO;
 import com.erarge.opevaontology.dto.demo3.Demo3FilterOptionsResponse;
@@ -35,10 +38,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Service
 public class ServiceImpl implements IService {
 
-    
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    // Your API DTOs currently use LocalDateTime; we will parse offset-aware values and convert.
+    // Your API DTOs currently use LocalDateTime; we will parse offset-aware values
+    // and convert.
     private static final DateTimeFormatter ISO_OFFSET_OR_LOCAL = DateTimeFormatter.ISO_DATE_TIME;
 
     @Override
@@ -69,11 +72,10 @@ public class ServiceImpl implements IService {
             throw new IllegalArgumentException("From and To dates are required");
         }
         String query = QueryBuilder.buildFilteredQuery(
-            request.getFrom(),
-            request.getTo(),
-            request.getDistanceMm(),
-            request.getSocPercent()
-        );
+                request.getFrom(),
+                request.getTo(),
+                request.getDistanceMm(),
+                request.getSocPercent());
         Object result = CustomSPARQL.sparqlQueryExecution(query);
         return (List<Map<String, String>>) result;
     }
@@ -95,7 +97,8 @@ public class ServiceImpl implements IService {
             String minTimeStr = stripDatatypeAndQuotes(timeRange.get("minTime"));
             String maxTimeStr = stripDatatypeAndQuotes(timeRange.get("maxTime"));
 
-            // Parse as OffsetDateTime if timezone exists (e.g., ...Z), otherwise LocalDateTime.
+            // Parse as OffsetDateTime if timezone exists (e.g., ...Z), otherwise
+            // LocalDateTime.
             if (minTimeStr != null && !minTimeStr.isEmpty()) {
                 minTime = parseToLocalDateTime(minTimeStr);
             }
@@ -110,13 +113,13 @@ public class ServiceImpl implements IService {
         List<Map<String, String>> distanceList = (List<Map<String, String>>) distanceResult;
 
         List<Double> distanceOptions = distanceList.stream()
-            .map(m -> stripDatatypeAndQuotes(m.get("distanceMm")))
-            .filter(d -> d != null && !d.isEmpty())
-            .map(ServiceImpl::tryParseDouble)
-            .filter(d -> d != null)
-            .distinct()
-            .sorted()
-            .collect(Collectors.toList());
+                .map(m -> stripDatatypeAndQuotes(m.get("distanceMm")))
+                .filter(d -> d != null && !d.isEmpty())
+                .map(ServiceImpl::tryParseDouble)
+                .filter(d -> d != null)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
 
         // Get SOC options
         String socQuery = QueryBuilder.buildSocOptionsQuery();
@@ -124,13 +127,13 @@ public class ServiceImpl implements IService {
         List<Map<String, String>> socList = (List<Map<String, String>>) socResult;
 
         List<Double> socOptions = socList.stream()
-            .map(m -> stripDatatypeAndQuotes(m.get("socPercent")))
-            .filter(s -> s != null && !s.isEmpty())
-            .map(ServiceImpl::tryParseDouble)
-            .filter(s -> s != null)
-            .distinct()
-            .sorted()
-            .collect(Collectors.toList());
+                .map(m -> stripDatatypeAndQuotes(m.get("socPercent")))
+                .filter(s -> s != null && !s.isEmpty())
+                .map(ServiceImpl::tryParseDouble)
+                .filter(s -> s != null)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
 
         return new FilterOptionsResponse(minTime, maxTime, distanceOptions, socOptions);
     }
@@ -142,7 +145,8 @@ public class ServiceImpl implements IService {
      * - "\"Umraniye\"@en"
      */
     private static String stripDatatypeAndQuotes(String raw) {
-        if (raw == null) return null;
+        if (raw == null)
+            return null;
 
         String s = raw.trim();
 
@@ -170,7 +174,8 @@ public class ServiceImpl implements IService {
     }
 
     private static LocalDateTime parseToLocalDateTime(String iso) {
-        // If it has timezone info (Z or +hh:mm), parse as OffsetDateTime then drop zone.
+        // If it has timezone info (Z or +hh:mm), parse as OffsetDateTime then drop
+        // zone.
         if (iso.endsWith("Z") || iso.matches(".*[+-]\\d{2}:\\d{2}$")) {
             return OffsetDateTime.parse(iso, ISO_OFFSET_OR_LOCAL).toLocalDateTime();
         }
@@ -185,28 +190,27 @@ public class ServiceImpl implements IService {
         }
     }
 
-    
     @Override
     @SuppressWarnings("unchecked")
     public Demo3FilterOptionsResponse getDemo3FilterOptions(String battery) {
         Object batteryRaw = CustomSPARQL.sparqlQueryExecution(QueryBuilderDemo3.buildBatteryOptionsQuery());
         List<Map<String, String>> batteryRows = (List<Map<String, String>>) batteryRaw;
         List<String> batteries = batteryRows.stream()
-            .map(row -> row.get("battery"))
-            .filter(value -> value != null && !value.isBlank())
-            .distinct()
-            .sorted()
-            .collect(Collectors.toList());
+                .map(row -> row.get("battery"))
+                .filter(value -> value != null && !value.isBlank())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
 
         Object socRaw = CustomSPARQL.sparqlQueryExecution(QueryBuilderDemo3.buildSocOptionsQuery(battery));
         List<Map<String, String>> socRows = (List<Map<String, String>>) socRaw;
         List<Double> socValues = socRows.stream()
-            .map(row -> row.get("soc"))
-            .map(ServiceImpl::tryParseDouble)
-            .filter(value -> value != null)
-            .distinct()
-            .sorted()
-            .collect(Collectors.toList());
+                .map(row -> row.get("soc"))
+                .map(ServiceImpl::tryParseDouble)
+                .filter(value -> value != null)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
 
         return new Demo3FilterOptionsResponse(batteries, socValues);
     }
@@ -218,13 +222,13 @@ public class ServiceImpl implements IService {
         List<Map<String, String>> rows = (List<Map<String, String>>) raw;
 
         List<Demo3EisPointDTO> points = rows.stream()
-            .map(this::mapDemo3Point)
-            .filter(point -> point != null)
-            .sorted(Comparator
-                .comparing(Demo3EisPointDTO::getBattery)
-                .thenComparingDouble(Demo3EisPointDTO::getSoc)
-                .thenComparingDouble(Demo3EisPointDTO::getFrequency))
-            .collect(Collectors.toList());
+                .map(this::mapDemo3Point)
+                .filter(point -> point != null)
+                .sorted(Comparator
+                        .comparing(Demo3EisPointDTO::getBattery)
+                        .thenComparingDouble(Demo3EisPointDTO::getSoc)
+                        .thenComparingDouble(Demo3EisPointDTO::getFrequency))
+                .collect(Collectors.toList());
 
         Set<String> batteries = new LinkedHashSet<>();
         Set<Double> socValues = new LinkedHashSet<>();
@@ -237,8 +241,10 @@ public class ServiceImpl implements IService {
             batteries.add(point.getBattery());
             socValues.add(point.getSoc());
 
-            if (minFrequency == null || point.getFrequency() < minFrequency) minFrequency = point.getFrequency();
-            if (maxFrequency == null || point.getFrequency() > maxFrequency) maxFrequency = point.getFrequency();
+            if (minFrequency == null || point.getFrequency() < minFrequency)
+                minFrequency = point.getFrequency();
+            if (maxFrequency == null || point.getFrequency() > maxFrequency)
+                maxFrequency = point.getFrequency();
             if (maxImpedanceMagnitude == null || point.getImpedanceMagnitude() > maxImpedanceMagnitude) {
                 maxImpedanceMagnitude = point.getImpedanceMagnitude();
             }
@@ -247,14 +253,13 @@ public class ServiceImpl implements IService {
 
         Double averagePhase = points.isEmpty() ? null : phaseSum / points.size();
         Demo3SummaryResponse summary = new Demo3SummaryResponse(
-            batteries.size(),
-            socValues.size(),
-            points.size(),
-            minFrequency,
-            maxFrequency,
-            maxImpedanceMagnitude,
-            averagePhase
-        );
+                batteries.size(),
+                socValues.size(),
+                points.size(),
+                minFrequency,
+                maxFrequency,
+                maxImpedanceMagnitude,
+                averagePhase);
 
         return new Demo3DatasetResponse(summary, points);
     }
@@ -268,11 +273,61 @@ public class ServiceImpl implements IService {
         Double zMag = tryParseDouble(row.get("zMag"));
         Double zPhase = tryParseDouble(row.get("zPhase"));
 
-        if (battery == null || soc == null || frequency == null || re == null || im == null || zMag == null || zPhase == null) {
+        if (battery == null || soc == null || frequency == null || re == null || im == null || zMag == null
+                || zPhase == null) {
             return null;
         }
 
         return new Demo3EisPointDTO(battery, soc, frequency, re, im, zMag, zPhase);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Demo1BalancingResponseDTO getDemo1BalancingSeries() {
+        String query = QueryBuilderDemo1.buildCellBalancingTimeByVoltageDifferenceQuery();
+        Object result = CustomSPARQL.sparqlQueryExecution(query);
+        List<Map<String, String>> rows = (List<Map<String, String>>) result;
+
+        List<Demo1BalancingPointDTO> points = rows.stream()
+                .map(this::toDemo1BalancingPoint)
+                .filter(point -> point != null)
+                .sorted(Comparator.comparingInt(Demo1BalancingPointDTO::getVdiffBin))
+                .collect(Collectors.toList());
+
+        Demo1BalancingSummaryDTO summary = buildDemo1BalancingSummary(points);
+        return new Demo1BalancingResponseDTO(summary, points);
+    }
+
+    private Demo1BalancingPointDTO toDemo1BalancingPoint(Map<String, String> row) {
+        Double vdiffBin = tryParseDouble(stripDatatypeAndQuotes(row.get("vdiffBin")));
+        Double avgBalTimeSec = tryParseDouble(stripDatatypeAndQuotes(row.get("avgBalTimeSec")));
+
+        if (vdiffBin == null || avgBalTimeSec == null) {
+            return null;
+        }
+
+        return new Demo1BalancingPointDTO(vdiffBin.intValue(), avgBalTimeSec);
+    }
+
+    private Demo1BalancingSummaryDTO buildDemo1BalancingSummary(List<Demo1BalancingPointDTO> points) {
+        if (points == null || points.isEmpty()) {
+            return new Demo1BalancingSummaryDTO(0, null, null, null, null, null);
+        }
+
+        int minVdiffBin = points.stream().mapToInt(Demo1BalancingPointDTO::getVdiffBin).min().orElse(0);
+        int maxVdiffBin = points.stream().mapToInt(Demo1BalancingPointDTO::getVdiffBin).max().orElse(0);
+        double minAvgBalTimeSec = points.stream().mapToDouble(Demo1BalancingPointDTO::getAvgBalTimeSec).min().orElse(0);
+        double maxAvgBalTimeSec = points.stream().mapToDouble(Demo1BalancingPointDTO::getAvgBalTimeSec).max().orElse(0);
+        double overallAverageBalTimeSec = points.stream().mapToDouble(Demo1BalancingPointDTO::getAvgBalTimeSec)
+                .average().orElse(0);
+
+        return new Demo1BalancingSummaryDTO(
+                points.size(),
+                minVdiffBin,
+                maxVdiffBin,
+                minAvgBalTimeSec,
+                maxAvgBalTimeSec,
+                overallAverageBalTimeSec);
     }
 
     @Override
@@ -283,10 +338,10 @@ public class ServiceImpl implements IService {
         List<Map<String, String>> rows = (List<Map<String, String>>) result;
 
         List<Demo2PowerPointDTO> points = rows.stream()
-            .map(this::toDemo2PowerPoint)
-            .filter(p -> p != null)
-            .sorted(Comparator.comparing(Demo2PowerPointDTO::getTime, Comparator.nullsLast(String::compareTo)))
-            .collect(Collectors.toList());
+                .map(this::toDemo2PowerPoint)
+                .filter(p -> p != null)
+                .sorted(Comparator.comparing(Demo2PowerPointDTO::getTime, Comparator.nullsLast(String::compareTo)))
+                .collect(Collectors.toList());
 
         Demo2PowerSummaryDTO summary = buildDemo2PowerSummary(points);
         return new Demo2PowerResponseDTO(summary, points);
@@ -324,17 +379,16 @@ public class ServiceImpl implements IService {
         String endTime = points.stream().map(Demo2PowerPointDTO::getTime).max(String::compareTo).orElse(null);
 
         return new Demo2PowerSummaryDTO(
-            points.size(),
-            startTime,
-            endTime,
-            minVoltage,
-            maxVoltage,
-            minCurrent,
-            maxCurrent,
-            minPowerW,
-            maxPowerW,
-            averagePowerW
-        );
+                points.size(),
+                startTime,
+                endTime,
+                minVoltage,
+                maxVoltage,
+                minCurrent,
+                maxCurrent,
+                minPowerW,
+                maxPowerW,
+                averagePowerW);
     }
 
     @Override
@@ -391,18 +445,26 @@ public class ServiceImpl implements IService {
     private static JsonNode toJson(Object raw) {
         return MAPPER.valueToTree(raw);
     }
+
     private static JsonNode getBindings(JsonNode root) {
         JsonNode results = root.path(0);
         return results.path("bindings");
     }
+
     private static String asString(JsonNode binding, String var) {
         JsonNode v = binding.path(var).path("value");
         return v.isMissingNode() ? null : v.asText();
     }
+
     private static long asLong(JsonNode binding, String var) {
         String s = asString(binding, var);
-        if (s == null || s.isEmpty()) return 0L;
-        try { return Math.round(Double.parseDouble(s)); } catch (Exception ignore) { return 0L; }
+        if (s == null || s.isEmpty())
+            return 0L;
+        try {
+            return Math.round(Double.parseDouble(s));
+        } catch (Exception ignore) {
+            return 0L;
+        }
     }
 
 }

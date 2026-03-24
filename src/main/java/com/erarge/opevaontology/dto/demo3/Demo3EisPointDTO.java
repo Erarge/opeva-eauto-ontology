@@ -9,17 +9,17 @@ public class Demo3EisPointDTO {
     private double impedanceMagnitude;
     private double impedancePhase;
 
-    public Demo3EisPointDTO() {}
+    public Demo3EisPointDTO() {
+    }
 
     public Demo3EisPointDTO(
-        String battery,
-        double soc,
-        double frequency,
-        double impedanceReal,
-        double impedanceImag,
-        double impedanceMagnitude,
-        double impedancePhase
-    ) {
+            String battery,
+            double soc,
+            double frequency,
+            double impedanceReal,
+            double impedanceImag,
+            double impedanceMagnitude,
+            double impedancePhase) {
         this.battery = battery;
         this.soc = soc;
         this.frequency = frequency;

@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OPEVA E-Auto Ontology Query Interface — Demo 5</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="../css/demo.css" />
@@ -14,51 +15,104 @@
       gap: 12px;
       margin: 8px 0 14px 0;
     }
+
     .kpi-card {
       text-align: center;
       border: 1px solid #e5e7eb;
       border-radius: 8px;
       padding: 12px 14px;
       background: #fff;
-      box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+      box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
     }
-    .kpi-title { font-size: 12px; color: #6b7280; }
-    .kpi-value { font-size: 22px; font-weight: 700; color: #111827; }
-    .chart-container-wrapper { margin-top: 18px; }
-    .download-inline { margin: 10px 0 0 0; }
-    .muted { color: #6b7280; font-size: 13px; }
-    .success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: 8px 12px; border-radius: 6px; }
-    .error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 8px 12px; border-radius: 6px; }
+
+    .kpi-title {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .chart-container-wrapper {
+      margin-top: 18px;
+    }
+
+    .download-inline {
+      margin: 10px 0 0 0;
+    }
+
+    .muted {
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    .success {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+
+    .error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
   </style>
 </head>
-<body>
-  <div class="container">
 
+<body>
+  <div class="topbar">
+    <a class="back-link" href="../index.html">← Back</a>
+  </div>
+
+  <div class="container">
     <div class="header">
       <h1>Demo 5: Energy Efficient Route Planning for Last Mile Delivery</h1>
       <p>
-        <b>Demo #5</b>’s objective is to propose an energy‑efficient route planning of EVs for last‑mile delivery services. In detail, it offers an advanced EV route planning solution to enhance energy efficiency in last‑mile deliveries by integrating internal and external data for dynamic routing. By simulating scenarios with EV fleets, it demonstrates the benefits of the technology to promote wider EV adoption. This serves as a roadmap for future projects, supporting EVs as a sustainable alternative in urban delivery operations.
-        The implementation architecture given in the next Figure is designed for testing the efficiency and integration of routing services for various dimensions. The cloud platform is designed to implement fleet management software and route optimization algorithms. Information of EV fleets are collected through an IoT Middleware. Then, the resulting routes are also transferred to the EVs using the IoT Middleware. Simulation of Urban MObility (SUMO) is also integrated to the system for verification of optimization results a‑priori to field implementations. Both real EVs and those in SUMO are tracked on the digital twin of the system. Then, the Edge‑AI on the EVs can calculate SoC and SoH additionally to BMS in L5 EVs. All the information are sent to the cloud through the IoT Middleware.
+        <b>Demo #5</b>’s objective is to propose an energy‑efficient route planning of EVs for last‑mile delivery
+        services. In detail, it offers an advanced EV route planning solution to enhance energy efficiency in last‑mile
+        deliveries by integrating internal and external data for dynamic routing. By simulating scenarios with EV
+        fleets, it demonstrates the benefits of the technology to promote wider EV adoption. This serves as a roadmap
+        for future projects, supporting EVs as a sustainable alternative in urban delivery operations.
+        The implementation architecture given in the next Figure is designed for testing the efficiency and integration
+        of routing services for various dimensions. The cloud platform is designed to implement fleet management
+        software and route optimization algorithms. Information of EV fleets are collected through an IoT Middleware.
+        Then, the resulting routes are also transferred to the EVs using the IoT Middleware. Simulation of Urban
+        MObility (SUMO) is also integrated to the system for verification of optimization results a‑priori to field
+        implementations. Both real EVs and those in SUMO are tracked on the digital twin of the system. Then, the
+        Edge‑AI on the EVs can calculate SoC and SoH additionally to BMS in L5 EVs. All the information are sent to the
+        cloud through the IoT Middleware.
       </p>
 
       <div class="figures-row">
         <figure class="figure w60">
-          <img src="../img/demo5-1.webp" alt="Demo 5 test architecture for implementation" class="header-img"/>
+          <img src="../img/demo5-1.webp" alt="Demo 5 test architecture for implementation" class="header-img" />
           <figcaption class="figure-caption">Figure 1. Demo 5 test architecture for implementation.</figcaption>
         </figure>
       </div>
 
       <p style="margin-top: 10px;">
-        The route optimization is also tested for missions of autonomous delivery solutions in last‑mile delivery (as shown in Figure 2). LOXO’s advanced autonomous vehicle technology with its logistic partner extensive logistics expertise, the project redefines last‑ and middle‑mile delivery processes (as shown in Figure 3). Through the OPEVA project, the necessary groundwork, including data collection, simulation, and the training of the LOXOFuser—a critical element of LOXO’s autonomous driving software—will be laid.
+        The route optimization is also tested for missions of autonomous delivery solutions in last‑mile delivery (as
+        shown in Figure 2). LOXO’s advanced autonomous vehicle technology with its logistic partner extensive logistics
+        expertise, the project redefines last‑ and middle‑mile delivery processes (as shown in Figure 3). Through the
+        OPEVA project, the necessary groundwork, including data collection, simulation, and the training of the
+        LOXOFuser—a critical element of LOXO’s autonomous driving software—will be laid.
       </p>
 
       <div class="figures-row">
         <figure class="figure w45">
-          <img src="../img/demo5-2.webp" alt="Route optimization" class="header-img"/>
+          <img src="../img/demo5-2.webp" alt="Route optimization" class="header-img" />
           <figcaption class="figure-caption">Figure 2. Route optimization.</figcaption>
         </figure>
         <figure class="figure w45">
-          <img src="../img/demo5-3.webp" alt="OPEVA autonomous delivery." class="header-img"/>
+          <img src="../img/demo5-3.webp" alt="OPEVA autonomous delivery." class="header-img" />
           <figcaption class="figure-caption">Figure 3. OPEVA autonomous delivery.</figcaption>
         </figure>
       </div>
@@ -83,11 +137,26 @@
 
         <!-- KPI Row -->
         <div id="demo5-kpis" class="kpi-row">
-          <div class="kpi-card"><div class="kpi-title">Routes</div><div class="kpi-value" id="kpi-routes">-</div></div>
-          <div class="kpi-card"><div class="kpi-title">Nodes</div><div class="kpi-value" id="kpi-nodes">-</div></div>
-          <div class="kpi-card"><div class="kpi-title">Customers</div><div class="kpi-value" id="kpi-customers">-</div></div>
-          <div class="kpi-card"><div class="kpi-title">Charging Stations</div><div class="kpi-value" id="kpi-cs">-</div></div>
-          <div class="kpi-card"><div class="kpi-title">Depots</div><div class="kpi-value" id="kpi-depots">-</div></div>
+          <div class="kpi-card">
+            <div class="kpi-title">Routes</div>
+            <div class="kpi-value" id="kpi-routes">-</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Nodes</div>
+            <div class="kpi-value" id="kpi-nodes">-</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Customers</div>
+            <div class="kpi-value" id="kpi-customers">-</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Charging Stations</div>
+            <div class="kpi-value" id="kpi-cs">-</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Depots</div>
+            <div class="kpi-value" id="kpi-depots">-</div>
+          </div>
         </div>
 
         <!-- Charts -->
@@ -133,14 +202,14 @@
       const s = perf.marks[a], e = perf.marks[b];
       if (Number.isFinite(s) && Number.isFinite(e)) perf.measures[name] = e - s;
     }
-    function fmtMs(v) { if (!Number.isFinite(v)) return '-'; return v < 1000 ? `${v.toFixed(1)} ms` : `${(v/1000).toFixed(2)} s`; }
+    function fmtMs(v) { if (!Number.isFinite(v)) return '-'; return v < 1000 ? `${v.toFixed(1)} ms` : `${(v / 1000).toFixed(2)} s`; }
     function fmtBytes(bytes) {
       if (!Number.isFinite(bytes)) return '-';
-      const u = ['B','KB','MB','GB']; let i=0, b=bytes;
-      while (b>=1024 && i<u.length-1) { b/=1024; i++; }
-      return `${b.toFixed(i===0?0:2)} ${u[i]}`;
+      const u = ['B', 'KB', 'MB', 'GB']; let i = 0, b = bytes;
+      while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
+      return `${b.toFixed(i === 0 ? 0 : 2)} ${u[i]}`;
     }
-    function resetPerf() { perf.marks={}; perf.measures={}; perf.meta={}; renderPerfPanel(); }
+    function resetPerf() { perf.marks = {}; perf.measures = {}; perf.meta = {}; renderPerfPanel(); }
     function renderPerfPanel() {
       const grid = document.getElementById('perf-grid');
       const panel = document.getElementById('perf-panel');
@@ -160,9 +229,9 @@
     }
 
     // ---- Notifications ----
-    function showError(msg){ const el=document.getElementById('error-message'); el.textContent=msg; el.style.display='block'; document.getElementById('success-message').style.display='none'; }
-    function showSuccess(msg){ const el=document.getElementById('success-message'); el.textContent=msg; el.style.display='block'; document.getElementById('error-message').style.display='none'; }
-    function hideMessages(){ document.getElementById('error-message').style.display='none'; document.getElementById('success-message').style.display='none'; }
+    function showError(msg) { const el = document.getElementById('error-message'); el.textContent = msg; el.style.display = 'block'; document.getElementById('success-message').style.display = 'none'; }
+    function showSuccess(msg) { const el = document.getElementById('success-message'); el.textContent = msg; el.style.display = 'block'; document.getElementById('error-message').style.display = 'none'; }
+    function hideMessages() { document.getElementById('error-message').style.display = 'none'; document.getElementById('success-message').style.display = 'none'; }
 
     // ---- HTTP helpers ----
     async function httpGet(url) {
@@ -170,7 +239,7 @@
       if (!r.ok) throw new Error(`HTTP ${r.status} @ ${url}`);
       return await r.json();
     }
-    function approxBytesOfJson(obj){ try{ const s=JSON.stringify(obj); return new Blob([s]).size; }catch{return null;} }
+    function approxBytesOfJson(obj) { try { const s = JSON.stringify(obj); return new Blob([s]).size; } catch { return null; } }
 
     // ---- Charts ----
     let sizeDistChart = null;
@@ -194,31 +263,31 @@
       // KPIs
       mark('kpi_fetch_start');
       const kpis = await httpGet(`${API_BASE_URL}/api/demo5/kpis`);
-      mark('kpi_fetch_end'); measure('kpi_fetch', 'kpi_fetch_start','kpi_fetch_end');
+      mark('kpi_fetch_end'); measure('kpi_fetch', 'kpi_fetch_start', 'kpi_fetch_end');
       renderKpis(kpis);
 
       // Size & Distribution
       mark('sizedist_fetch_start');
       const sizeDist = await httpGet(`${API_BASE_URL}/api/demo5/route-mix/size-distribution`);
-      mark('sizedist_fetch_end'); measure('sizedist_fetch', 'sizedist_fetch_start','sizedist_fetch_end');
+      mark('sizedist_fetch_end'); measure('sizedist_fetch', 'sizedist_fetch_start', 'sizedist_fetch_end');
       cacheSizeDist = Array.isArray(sizeDist) ? sizeDist : [];
       renderSizeDistribution(cacheSizeDist);
 
       // Time Window
       mark('tw_fetch_start');
       const twMix = await httpGet(`${API_BASE_URL}/api/demo5/route-mix/time-window`);
-      mark('tw_fetch_end'); measure('tw_fetch', 'tw_fetch_start','tw_fetch_end');
+      mark('tw_fetch_end'); measure('tw_fetch', 'tw_fetch_start', 'tw_fetch_end');
       cacheTw = Array.isArray(twMix) ? twMix : [];
       renderTimeWindowMix(cacheTw);
 
       perf.meta.note = 'Overview fetched from /api/demo5/*';
-      mark('total_end'); measure('total','total_start','total_end');
+      mark('total_end'); measure('total', 'total_start', 'total_end');
       renderPerfPanel();
       showSuccess('Demo 5 overview loaded.');
     }
 
     function renderKpis(k) {
-      const set = (id, v)=>{ const el=document.getElementById(id); if (el) el.textContent = v ?? '-'; };
+      const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v ?? '-'; };
       set('kpi-routes', k?.routes ?? '-');
       set('kpi-nodes', k?.nodes ?? '-');
       set('kpi-customers', k?.customers ?? '-');
@@ -258,13 +327,13 @@
       // compact table
       const html =
         `<table><thead><tr><th>Size</th><th>Distribution</th><th>Routes</th></tr></thead>
-         <tbody>${rows.map(r=>`<tr><td>${r.size}</td><td>${r.distribution}</td><td>${r.routes}</td></tr>`).join('')}</tbody></table>`;
+         <tbody>${rows.map(r => `<tr><td>${r.size}</td><td>${r.distribution}</td><td>${r.routes}</td></tr>`).join('')}</tbody></table>`;
       const host = document.getElementById('sizeDistTable');
       if (host) host.innerHTML = html;
     }
     function buildSizeDistLabels(rows) {
-      const sizes = Array.from(new Set(rows.map(r => r.size))).sort((a,b)=>a-b);
-      const dists = ['R','C','RC'];
+      const sizes = Array.from(new Set(rows.map(r => r.size))).sort((a, b) => a - b);
+      const dists = ['R', 'C', 'RC'];
       const out = [];
       sizes.forEach(s => dists.forEach(d => out.push(`${s}-${d}`)));
       return out;
@@ -272,7 +341,7 @@
 
     function renderTimeWindowMix(rows) {
       // rows: [{tw:int(1|2|3), routes:int}]
-      const labelOf = tw => ({1:'Wide', 2:'Medium', 3:'Narrow'}[tw] || String(tw));
+      const labelOf = tw => ({ 1: 'Wide', 2: 'Medium', 3: 'Narrow' }[tw] || String(tw));
       const labels = rows.map(x => labelOf(x.tw));
       const data = rows.map(x => x.routes);
 
@@ -298,7 +367,7 @@
       // compact table
       const html =
         `<table><thead><tr><th>Time Window</th><th>Routes</th></tr></thead>
-         <tbody>${rows.map(r=>`<tr><td>${labelOf(r.tw)}</td><td>${r.routes}</td></tr>`).join('')}</tbody></table>`;
+         <tbody>${rows.map(r => `<tr><td>${labelOf(r.tw)}</td><td>${r.routes}</td></tr>`).join('')}</tbody></table>`;
       const host = document.getElementById('twTable');
       if (host) host.innerHTML = html;
     }
@@ -307,13 +376,13 @@
     function downloadCSV(data, filename) {
       if (!Array.isArray(data) || data.length === 0) { showError('No data to download.'); return; }
       const keys = Array.from(
-        data.reduce((set, row)=>{ Object.keys(row||{}).forEach(k=>set.add(k)); return set; }, new Set())
+        data.reduce((set, row) => { Object.keys(row || {}).forEach(k => set.add(k)); return set; }, new Set())
       ).sort();
 
       const esc = v => {
-        const s = v==null ? '' : String(v);
+        const s = v == null ? '' : String(v);
         const needsQuotes = s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r');
-        const q = s.replace(/"/g,'""');
+        const q = s.replace(/"/g, '""');
         return needsQuotes ? `"${q}"` : q;
       };
 
@@ -331,4 +400,5 @@
     }
   </script>
 </body>
+
 </html>

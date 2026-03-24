@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,37 +10,51 @@
 </head>
 
 <body>
+  <div class="topbar">
+    <a class="back-link" href="../index.html">← Back</a>
+  </div>
+
   <div class="container">
     <div class="header">
-      <h1>Demo 6&8: In-vehicle integration of inductive charging with BMS and power electronics & An effective GaN-based IoT-enabled surface inductive charging system</h1>
+      <h1>Demo 6&8: In-vehicle integration of inductive charging with BMS and power electronics & An effective GaN-based
+        IoT-enabled surface inductive charging system</h1>
       <p>
-        Demo 6 & 8 focuses on integrating inductive wireless charging with Battery Management Systems (BMS) and power electronics for electric vehicles (EVs). The project aims to develop an efficient, GaN-based IoT-enabled surface inductive charging system, ensuring secure and trustworthy wireless power transfer.
+        Demo 6 & 8 focuses on integrating inductive wireless charging with Battery Management Systems (BMS) and power
+        electronics for electric vehicles (EVs). The project aims to develop an efficient, GaN-based IoT-enabled surface
+        inductive charging system, ensuring secure and trustworthy wireless power transfer.
 
-Demo 6 & 8 have been merged to advance wireless EV charging by integrating five key technologies (KTs) across a layered infrastructure consisting of seven building blocks (BBs). The following key technologies play a crucial role:
+        Demo 6 & 8 have been merged to advance wireless EV charging by integrating five key technologies (KTs) across a
+        layered infrastructure consisting of seven building blocks (BBs). The following key technologies play a crucial
+        role:
 
-KT2: Smart eco-charging management
-KT12: Cloud platform for fleet and charging data sharing
-KT10: Holistic security for EVs and charging infrastructure
-KT16: Inductive charging & communication between the vehicle and grid
-KT20: Secure proximity control for safe charging
-The system follows a Vehicle-to-Cloud (V2C) and Infrastructure-to-Cloud (I2C) approach, ensuring seamless data exchange between EVs, cloud platforms (OPEVA Main Cloud Framework) enabling a digital twin approach, and the charging infrastructure. The framework visualizes on-board charging data, security modules, and cryptographic operations.
+        KT2: Smart eco-charging management
+        KT12: Cloud platform for fleet and charging data sharing
+        KT10: Holistic security for EVs and charging infrastructure
+        KT16: Inductive charging & communication between the vehicle and grid
+        KT20: Secure proximity control for safe charging
+        The system follows a Vehicle-to-Cloud (V2C) and Infrastructure-to-Cloud (I2C) approach, ensuring seamless data
+        exchange between EVs, cloud platforms (OPEVA Main Cloud Framework) enabling a digital twin approach, and the
+        charging infrastructure. The framework visualizes on-board charging data, security modules, and cryptographic
+        operations.
 
- 
 
-Demo 6&8 progress is on the way to meeting the following main objectives of the project:
 
-Objective 4: Reducing peak loads on the electric grid
-Objective 5: Improving energy control efficiency
-By applying a methodology that follows a multi-layered architecture.  This architecture integrates the following Building Blocks:
+        Demo 6&8 progress is on the way to meeting the following main objectives of the project:
 
-BB1 – Cloud architecture, IoT-based data acquisition, monitoring and communication framework  
-BB2 – IoT-enabled Wireless (Inductive) Charging 
-BB3 – Standalone Battery Management System
-BB4 – AI/ML-based SOX estimation of Battery RUL with vibration data
-BB5 – Secure Proximity Control
-BB6 – HW-based Cyber-resilience as a Service
-BB7 – Centralized TPM-based Identity Management
-These BBs will be tested on real settings as the studies are ongoing in close coordination with OEMs (i.e.,  Musoshi EV).
+        Objective 4: Reducing peak loads on the electric grid
+        Objective 5: Improving energy control efficiency
+        By applying a methodology that follows a multi-layered architecture. This architecture integrates the following
+        Building Blocks:
+
+        BB1 – Cloud architecture, IoT-based data acquisition, monitoring and communication framework
+        BB2 – IoT-enabled Wireless (Inductive) Charging
+        BB3 – Standalone Battery Management System
+        BB4 – AI/ML-based SOX estimation of Battery RUL with vibration data
+        BB5 – Secure Proximity Control
+        BB6 – HW-based Cyber-resilience as a Service
+        BB7 – Centralized TPM-based Identity Management
+        These BBs will be tested on real settings as the studies are ongoing in close coordination with OEMs (i.e.,
+        Musoshi EV).
       </p>
       <div class="figures-row">
         <figure class="figure w60">
@@ -200,7 +215,7 @@ These BBs will be tested on real settings as the studies are ongoing in close co
 
     function fmtBytes(bytes) {
       if (!Number.isFinite(bytes)) return '-';
-      const units = ['B','KB','MB','GB'];
+      const units = ['B', 'KB', 'MB', 'GB'];
       let u = 0, b = bytes;
       while (b >= 1024 && u < units.length - 1) { b /= 1024; u++; }
       return `${b.toFixed(u === 0 ? 0 : 2)} ${units[u]}`;
@@ -633,7 +648,7 @@ These BBs will be tested on real settings as the studies are ongoing in close co
             legend: { display: true, position: 'top' },
             tooltip: {
               callbacks: {
-                label: function(context) {
+                label: function (context) {
                   const label = context.dataset.label || '';
                   const eff = Number.isFinite(context.parsed.y) ? context.parsed.y.toFixed(2) : 'N/A';
                   const pwr = Number.isFinite(context.parsed.x) ? context.parsed.x.toFixed(2) : 'N/A';
@@ -824,4 +839,5 @@ These BBs will be tested on real settings as the studies are ongoing in close co
     }
   </script>
 </body>
+
 </html>

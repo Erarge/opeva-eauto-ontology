@@ -6,7 +6,8 @@ public class Demo3FilterOptionsResponse {
     private List<String> batteries;
     private List<Double> socValues;
 
-    public Demo3FilterOptionsResponse() {}
+    public Demo3FilterOptionsResponse() {
+    }
 
     public Demo3FilterOptionsResponse(List<String> batteries, List<Double> socValues) {
         this.batteries = batteries;

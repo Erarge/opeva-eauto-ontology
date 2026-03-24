@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.erarge.opevaontology.dto.FilterOptionsResponse;
 import com.erarge.opevaontology.dto.FilteredQueryRequest;
+import com.erarge.opevaontology.dto.demo1.Demo1BalancingResponseDTO;
 import com.erarge.opevaontology.dto.TimeIntervalQueryRequest;
 import com.erarge.opevaontology.dto.demo2.Demo2PowerResponseDTO;
 import com.erarge.opevaontology.dto.demo3.Demo3DatasetResponse;
@@ -28,11 +29,11 @@ import com.erarge.opevaontology.service.IService;
 @RestController
 @RequestMapping(value = "")
 public class APIController {
-    @Autowired
-    IService service;
+	@Autowired
+	IService service;
 
-    @PostMapping(value = "/sparql")
-    public Object sparql(@RequestBody final String query) {
+	@PostMapping(value = "/sparql")
+	public Object sparql(@RequestBody final String query) {
 		return service.sparql(query);
 	}
 
@@ -40,20 +41,30 @@ public class APIController {
 	public Object sparqlDemo5(@RequestBody final String query) {
 		return service.sparqlDemo5(query);
 	}
-	
+
 	@GetMapping(value = "/api/filter-options")
 	public FilterOptionsResponse getFilterOptions() {
 		return service.getFilterOptions();
 	}
-	
+
 	@PostMapping(value = "/api/query/time-interval")
 	public List<Map<String, String>> queryByTimeInterval(@RequestBody final TimeIntervalQueryRequest request) {
 		return service.queryByTimeInterval(request);
 	}
-	
+
 	@PostMapping(value = "/api/query/filtered")
 	public List<Map<String, String>> queryFiltered(@RequestBody final FilteredQueryRequest request) {
 		return service.queryFiltered(request);
+	}
+
+	@GetMapping("/api/demo1/balancing-series")
+	public ResponseEntity<Demo1BalancingResponseDTO> getDemo1BalancingSeries() {
+		return ResponseEntity.ok(service.getDemo1BalancingSeries());
+	}
+
+	@GetMapping("/api/demo2/power-series")
+	public ResponseEntity<Demo2PowerResponseDTO> getDemo2PowerSeries() {
+		return ResponseEntity.ok(service.getDemo2PowerSeries());
 	}
 
 	@GetMapping("/api/demo3/filter-options")
@@ -69,24 +80,18 @@ public class APIController {
 		return ResponseEntity.ok(service.getDemo3Dataset(battery, soc));
 	}
 
-    @GetMapping("/api/demo2/power-series")
-	public ResponseEntity<Demo2PowerResponseDTO> getDemo2PowerSeries() {
-		return ResponseEntity.ok(service.getDemo2PowerSeries());
+	@GetMapping("/api/demo5/kpis")
+	public ResponseEntity<KpisResponse> getKpis() {
+		return ResponseEntity.ok(service.getKpis());
 	}
 
-	@GetMapping("/api/demo5/kpis")
-    public ResponseEntity<KpisResponse> getKpis() {
-        return ResponseEntity.ok(service.getKpis());
-    }
+	@GetMapping("/api/demo5/route-mix/size-distribution")
+	public ResponseEntity<List<RouteSizeDistributionDTO>> getRouteMixSizeDistribution() {
+		return ResponseEntity.ok(service.getRouteMixSizeDistribution());
+	}
 
-    @GetMapping("/api/demo5/route-mix/size-distribution")
-    public ResponseEntity<List<RouteSizeDistributionDTO>> getRouteMixSizeDistribution() {
-        return ResponseEntity.ok(service.getRouteMixSizeDistribution());
-    }
-
-    @GetMapping("/api/demo5/route-mix/time-window")
-    public ResponseEntity<List<RouteTimeWindowDTO>> getRouteMixTimeWindow() {
-        return ResponseEntity.ok(service.getRouteMixTimeWindow());
-    }
-
+	@GetMapping("/api/demo5/route-mix/time-window")
+	public ResponseEntity<List<RouteTimeWindowDTO>> getRouteMixTimeWindow() {
+		return ResponseEntity.ok(service.getRouteMixTimeWindow());
+	}
 }
