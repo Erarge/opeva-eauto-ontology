@@ -8,147 +8,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="../css/demo.css">
-
-  <style>
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      /* display: flex;
-      justify-content: space-between; */
-      gap: 16px;
-      margin: 20px 0 30px;
-    }
-
-    .kpi-card,
-    .chart-card,
-    .info-card {
-      background: #fff;
-      border: 1px solid #e9ecef;
-      border-radius: 10px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    }
-
-    .kpi-card {
-      text-align: center;
-      padding: 18px;
-    }
-
-    .kpi-label {
-      color: #6c757d;
-      font-size: 0.92rem;
-      margin-bottom: 8px;
-      font-weight: 600;
-    }
-
-    .kpi-value {
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: #212529;
-    }
-
-    .section-title {
-      margin: 0 0 14px;
-      color: #333;
-      font-size: 1.2rem;
-    }
-
-    .charts-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 20px;
-      margin-top: 24px;
-    }
-
-    .chart-card {
-      padding: 18px;
-    }
-
-    .chart-wrap {
-      position: relative;
-      height: 360px;
-    }
-
-    .meta-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin: 10px 0 0;
-      color: #6c757d;
-      font-size: 0.9rem;
-      flex-wrap: wrap;
-    }
-
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
-    }
-
-    .info-card {
-      padding: 18px;
-    }
-
-    .mono {
-      font-family: Consolas, Monaco, monospace;
-      word-break: break-word;
-      white-space: pre-wrap;
-      background: #f8f9fa;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #e9ecef;
-      max-height: 260px;
-      overflow: auto;
-    }
-
-    .muted {
-      color: #6c757d;
-    }
-
-    .toolbar-inline {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
-
-    .empty-state {
-      padding: 20px;
-      text-align: center;
-      color: #6c757d;
-      background: #f8f9fa;
-      border: 1px dashed #ced4da;
-      border-radius: 8px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-    }
-
-    th,
-    td {
-      border: 1px solid #e9ecef;
-      padding: 10px 12px;
-      text-align: left;
-      font-size: 0.95rem;
-    }
-
-    thead th {
-      background: #000;
-      color: #fff;
-      font-weight: 700;
-    }
-
-    tbody tr:nth-child(even) {
-      background: #fcfcfc;
-    }
-  </style>
 </head>
 
-<body>
+<body class="demo-analytics demo-impedance">
   <div class="topbar">
     <a class="back-link" href="../index.html">← Back</a>
   </div>
@@ -160,10 +22,10 @@
         Demo 3 focuses on <b>innovative sensing strategies for battery monitoring</b>, which includes wireless custom
         sensors for temperature and pressure, and integrated impedance sensors.
       </p>
-      <p style="margin-top: 12px;">
+      <p class="header-lead">
         The demonstrator consists of two main parts:
       </p>
-      <ol style="list-style-type: decimal; padding-left: 20px;">
+      <ol class="header-list">
         <li>Integration of a new sensors in a small module called CMU (Cell Management Unit) for calculating the cell
           impedance</li>
         <li>Integration of wireless sensors on battery pack</li>
@@ -176,8 +38,8 @@
     </div>
 
     <div class="content">
-      <div id="error-message" class="error" style="display:none;"></div>
-      <div id="success-message" class="success" style="display:none;"></div>
+      <div id="error-message" class="error hidden"></div>
+      <div id="success-message" class="success hidden"></div>
 
       <div class="form-section">
         <h2>Battery impedance explorer</h2>
@@ -258,7 +120,7 @@
         </div>
       </div>
 
-      <div class="form-section" style="margin-top: 28px;">
+      <div class="form-section mt-28">
         <h2>Raw EIS points</h2>
         <div class="toolbar-inline">
           <span class="muted" id="tableMeta"></span>

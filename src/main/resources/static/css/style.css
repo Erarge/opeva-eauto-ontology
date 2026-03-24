@@ -4,17 +4,24 @@ body {
   margin: 0;
 }
 
+:root {
+  --home-bg: #000;
+  --overlay-bg: rgba(0, 0, 0, 0.18);
+  --hotspot-hover: rgba(3, 166, 241, 0.514);
+  --hotspot-shadow: 0 0 1.2vmin 0.35vmin rgba(0, 0, 0, 0.85);
+  --logo-radius: 8px;
+  --logo-offset: 50px;
+  --logo-width: 300px;
+}
+
 body {
   display: grid;
   place-items: center;
-  background: #000;
+  background: var(--home-bg);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* === STAGE ===
-       Locks layout to SVG aspect ratio (1440 × 810 → 16:9)
-       All hotspots are positioned relative to this box
-    */
+/* Stage locked to the 1440 × 810 background aspect ratio (16:9). */
 .stage {
   position: relative;
   width: min(100vw, calc(100vh * 16 / 9));
@@ -30,11 +37,10 @@ body {
 .overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.18);
+  background: var(--overlay-bg);
   pointer-events: none;
 }
 
-/* === GENERIC HOTSPOT === */
 .hotspot {
   position: absolute;
   z-index: 5;
@@ -43,102 +49,43 @@ body {
   text-decoration: none;
 }
 
-/* Optional visual feedback */
 .hotspot:hover {
-  /* outline: 3px solid rgba(102,126,234,0.7); */
-  background: rgba(3, 166, 241, 0.514);
-  box-shadow: 0 0 1.2vmin 0.35vmin rgba(0, 0, 0, 0.85);
+  background: var(--hotspot-hover);
+  box-shadow: var(--hotspot-shadow);
   cursor: pointer;
 }
 
-/* === HOTSPOT POSITIONS (percent of SVG) === */
-
-/* Left / Top */
-.demo5 {
-  left: 6.5%;
-  top: 7.6%;
-  width: 18.4%;
-  height: 9.8%;
-}
-
-/* Left / Middle */
-.demo4 {
-  left: 3.4%;
-  top: 40.2%;
-  width: 18.6%;
-  height: 10.1%;
-}
-
-/* Center stack */
-.demo1 {
-  left: 28.1%;
-  top: 40.0%;
-  width: 18.7%;
-  height: 16.4%;
-}
-
-.demo2 {
-  left: 28.1%;
-  top: 60.2%;
-  width: 18.7%;
-  height: 11.4%;
-}
-
-.demo3 {
-  left: 28.1%;
-  top: 74.3%;
-  width: 18.6%;
-  height: 10.0%;
-}
-
-/* Right column */
-.demo6_8 {
-  /* YOUR ADJUSTED VALUES */
-  left: 71.6%;
-  top: 10.2%;
-  width: 26%;
-  height: 11.5%;
-}
-
-.demo7 {
-  left: 71.9%;
-  top: 26.0%;
-  width: 26.2%;
-  height: 10.1%;
-}
-
-.demo9 {
-  left: 71.9%;
-  top: 40.2%;
-  width: 26.1%;
-  height: 10.1%;
-}
+.demo5 { left: 6.5%; top: 7.6%; width: 18.4%; height: 9.8%; }
+.demo4 { left: 3.4%; top: 40.2%; width: 18.6%; height: 10.1%; }
+.demo1 { left: 28.1%; top: 40%; width: 18.7%; height: 16.4%; }
+.demo2 { left: 28.1%; top: 60.2%; width: 18.7%; height: 11.4%; }
+.demo3 { left: 28.1%; top: 74.3%; width: 18.6%; height: 10%; }
+.demo6_8 { left: 71.6%; top: 10.2%; width: 26%; height: 11.5%; }
+.demo7 { left: 71.9%; top: 26%; width: 26.2%; height: 10.1%; }
+.demo9 { left: 71.9%; top: 40.2%; width: 26.1%; height: 10.1%; }
 
 .logo {
-  padding: 10px;
-  background-color: black;
-  border-radius: 8px;
   position: absolute;
-  right: 50px;
-  bottom: 50px;
-  cursor: pointer;
-  overflow: hidden;
-
+  right: var(--logo-offset);
+  bottom: var(--logo-offset);
   display: inline-block;
+  overflow: hidden;
+  padding: 10px;
+  background-color: #000;
+  border-radius: var(--logo-radius);
+  cursor: pointer;
   transition: transform 0.3s ease;
 }
 
 .logo img {
-  width: 300px;
+  width: var(--logo-width);
   display: block;
 }
 
-/* SCALE → container */
 .logo:hover {
   transform: scale(1.08);
 }
 
-/* SHINE */
 .logo::after {
   content: "";
   position: absolute;
@@ -146,12 +93,7 @@ body {
   left: -100%;
   width: 40%;
   height: 100%;
-
-  background: linear-gradient(120deg,
-      transparent,
-      rgba(255, 255, 255, 0.6),
-      transparent);
-
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.6), transparent);
   transform: skewX(-20deg);
 }
 

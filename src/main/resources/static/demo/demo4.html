@@ -29,8 +29,8 @@
     </div>
 
     <div class="content">
-      <div id="error-message" class="error" style="display:none;"></div>
-      <div id="success-message" class="success" style="display:none;"></div>
+      <div id="error-message" class="error hidden"></div>
+      <div id="success-message" class="success hidden"></div>
 
       <div class="form-section">
         <h2>Query Parameters</h2>
@@ -39,10 +39,10 @@
         </div>
 
         <!-- Performance panel -->
-        <div class="perf-box" id="perf-panel" style="display:none;">
+        <div class="perf-box hidden" id="perf-panel">
           <h3>Performance</h3>
           <div class="perf-grid" id="perf-grid"></div>
-          <div class="perf-muted" id="perf-note" style="margin-top:8px;"></div>
+          <div class="perf-muted mt-8" id="perf-note"></div>
         </div>
 
         <form id="query-form">
@@ -87,12 +87,12 @@
           <div class="results-count" id="results-count"></div>
         </div>
 
-        <div id="loading" class="loading" style="display:none;">
+        <div id="loading" class="loading hidden">
           <div class="loading-spinner"></div>
           <p>Loading results...</p>
         </div>
 
-        <div id="charts-section" style="display:none; margin-top: 30px;">
+        <div id="charts-section" class="hidden mt-30">
           <div class="chart-container-wrapper">
             <div class="chart-container">
               <h3>Efficiency vs Power</h3>
@@ -471,7 +471,7 @@
           toggleDownloadBar(false);
           updateDownloadMeta(0, perf.meta.payloadBytes);
 
-          resultsContainer.innerHTML = '<p style="padding:20px; text-align:center; color:#666;">No results found for the given criteria.</p>';
+          resultsContainer.innerHTML = '<p class="results-empty">No results found for the given criteria.</p>';
           resultsCount.textContent = '0 results';
           document.getElementById('charts-section').style.display = 'none';
           if (efficiencyChart) efficiencyChart.destroy();
