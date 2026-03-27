@@ -59,6 +59,11 @@ public class APIController {
         return service.queryFiltered(request);
     }
 
+    @GetMapping(value = "/api/query/functional-safety")
+    public List<Map<String, String>> queryFunctionalSafety() {
+        return service.queryFunctionalSafety();
+    }
+
     @GetMapping("/api/demo1/balancing-series")
     public ResponseEntity<Demo1BalancingResponseDTO> getDemo1BalancingSeries() {
         return ResponseEntity.ok(service.getDemo1BalancingSeries());

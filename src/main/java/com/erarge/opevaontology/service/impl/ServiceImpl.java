@@ -90,6 +90,14 @@ public class ServiceImpl implements IService {
 
     @Override
     @SuppressWarnings("unchecked")
+    public List<Map<String, String>> queryFunctionalSafety() {
+        String query = QueryBuilder.buildFunctionalSafetyQuery();
+        Object result = CustomSPARQL.sparqlQueryExecution(query);
+        return (List<Map<String, String>>) result;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
     public FilterOptionsResponse getFilterOptions() {
         // Get time range
         String timeRangeQuery = QueryBuilder.buildTimeRangeQuery();

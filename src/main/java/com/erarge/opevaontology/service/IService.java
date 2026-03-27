@@ -25,6 +25,8 @@ public interface IService {
 
     public List<Map<String, String>> queryFiltered(FilteredQueryRequest request);
 
+    public List<Map<String, String>> queryFunctionalSafety();
+
     public FilterOptionsResponse getFilterOptions();
 
     Demo1BalancingResponseDTO getDemo1BalancingSeries();
