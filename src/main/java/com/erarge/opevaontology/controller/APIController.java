@@ -20,6 +20,7 @@ import com.erarge.opevaontology.dto.TimeIntervalQueryRequest;
 import com.erarge.opevaontology.dto.demo2.Demo2PowerResponseDTO;
 import com.erarge.opevaontology.dto.demo3.Demo3DatasetResponse;
 import com.erarge.opevaontology.dto.demo3.Demo3FilterOptionsResponse;
+import com.erarge.opevaontology.dto.demo4.Demo4EnergyRateDTO;
 import com.erarge.opevaontology.dto.demo5.KpisResponse;
 import com.erarge.opevaontology.dto.demo5.RouteSizeDistributionDTO;
 import com.erarge.opevaontology.dto.demo5.RouteTimeWindowDTO;
@@ -93,5 +94,10 @@ public class APIController {
 	@GetMapping("/api/demo5/route-mix/time-window")
 	public ResponseEntity<List<RouteTimeWindowDTO>> getRouteMixTimeWindow() {
 		return ResponseEntity.ok(service.getRouteMixTimeWindow());
+	}
+
+	@GetMapping("/api/demo4/energy-rate")
+	public ResponseEntity<List<Demo4EnergyRateDTO>> getDemo4EnergyRate() {
+		return ResponseEntity.ok(service.getDemo4EnergyRate());
 	}
 }

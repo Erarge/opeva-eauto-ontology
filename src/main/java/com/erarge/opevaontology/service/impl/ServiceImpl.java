@@ -26,6 +26,11 @@ import com.erarge.opevaontology.dto.TimeIntervalQueryRequest;
 import com.erarge.opevaontology.dto.demo2.Demo2PowerPointDTO;
 import com.erarge.opevaontology.dto.demo2.Demo2PowerResponseDTO;
 import com.erarge.opevaontology.dto.demo2.Demo2PowerSummaryDTO;
+import com.erarge.opevaontology.dto.demo4.Demo4EnergyRateDTO;
+import com.erarge.opevaontology.dto.demo4.Demo4WeatherGroupDTO;
+import com.erarge.opevaontology.dto.demo4.Demo4WeatherResponseDTO;
+import com.erarge.opevaontology.dto.demo4.Demo4WeatherSessionDTO;
+import com.erarge.opevaontology.dto.demo4.Demo4WeatherSummaryDTO;
 import com.erarge.opevaontology.dto.demo5.KpisResponse;
 import com.erarge.opevaontology.dto.demo5.RouteSizeDistributionDTO;
 import com.erarge.opevaontology.dto.demo5.RouteTimeWindowDTO;
@@ -185,6 +190,14 @@ public class ServiceImpl implements IService {
     private static Double tryParseDouble(String s) {
         try {
             return Double.parseDouble(s);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private static Integer tryParseInt(String s) {
+        try {
+            return Integer.parseInt(s);
         } catch (NumberFormatException e) {
             return null;
         }
@@ -439,6 +452,51 @@ public class ServiceImpl implements IService {
             }
         }
         return out;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<Demo4EnergyRateDTO> getDemo4EnergyRate() {
+        String query = QueryBuilderDemo4.buildEnergyRateQuery();
+        Object result = CustomSPARQL.sparqlQueryExecution(query);
+        List<Map<String, String>> rows = (List<Map<String, String>>) result;
+
+        return rows.stream()
+                .map(this::toDemo4EnergyRate)
+                .filter(dto -> dto != null)
+                .collect(Collectors.toList());
+    }
+
+    private Demo4EnergyRateDTO toDemo4EnergyRate(Map<String, String> row) {
+        String weather = stripDatatypeAndQuotes(row.get("weather"));
+        Integer frame = tryParseInt(stripDatatypeAndQuotes(row.get("frame")));
+        Double speedKmh = tryParseDouble(stripDatatypeAndQuotes(row.get("speed_kmh")));
+        Double energyConsumedKwh = tryParseDouble(stripDatatypeAndQuotes(row.get("energyConsumed_kWh")));
+        Double sensorPowerW = tryParseDouble(stripDatatypeAndQuotes(row.get("sensorPower_W")));
+        Double socPct = tryParseDouble(stripDatatypeAndQuotes(row.get("soc_pct")));
+
+        if (weather == null || frame == null || speedKmh == null) return null;
+
+        return new Demo4EnergyRateDTO(
+                weather,
+                frame,
+                speedKmh,
+                energyConsumedKwh != null ? energyConsumedKwh : 0,
+                sensorPowerW != null ? sensorPowerW : 0,
+                socPct != null ? socPct : 0);
+    }
+
+    private Demo4WeatherSummaryDTO buildDemo4WeatherSummary(
+            List<Demo4WeatherSessionDTO> sessions, List<Demo4WeatherGroupDTO> groups) {
+        if (sessions.isEmpty()) {
+            return new Demo4WeatherSummaryDTO(0, 0, 0, 0, 0, 0, 0);
+        }
+        double minEff = sessions.stream().mapToDouble(Demo4WeatherSessionDTO::getEnergyEffKwh100km).min().orElse(0);
+        double avgEff = sessions.stream().mapToDouble(Demo4WeatherSessionDTO::getEnergyEffKwh100km).average().orElse(0);
+        double maxEff = sessions.stream().mapToDouble(Demo4WeatherSessionDTO::getEnergyEffKwh100km).max().orElse(0);
+        double totalDistKm = sessions.stream().mapToDouble(Demo4WeatherSessionDTO::getTotalDistanceM).sum() / 1000.0;
+        double totalEnergy = sessions.stream().mapToDouble(Demo4WeatherSessionDTO::getTotalEnergyKwh).sum();
+        return new Demo4WeatherSummaryDTO(sessions.size(), groups.size(), minEff, avgEff, maxEff, totalDistKm, totalEnergy);
     }
 
     // ---------- helpers for SPARQL-JSON ----------

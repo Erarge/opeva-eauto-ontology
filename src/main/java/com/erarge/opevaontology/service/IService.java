@@ -10,6 +10,7 @@ import com.erarge.opevaontology.dto.demo1.Demo1BalancingResponseDTO;
 import com.erarge.opevaontology.dto.demo2.Demo2PowerResponseDTO;
 import com.erarge.opevaontology.dto.demo3.Demo3DatasetResponse;
 import com.erarge.opevaontology.dto.demo3.Demo3FilterOptionsResponse;
+import com.erarge.opevaontology.dto.demo4.Demo4EnergyRateDTO;
 import com.erarge.opevaontology.dto.demo5.KpisResponse;
 import com.erarge.opevaontology.dto.demo5.RouteSizeDistributionDTO;
 import com.erarge.opevaontology.dto.demo5.RouteTimeWindowDTO;
@@ -38,5 +39,7 @@ public interface IService {
     List<RouteSizeDistributionDTO> getRouteMixSizeDistribution();
 
     List<RouteTimeWindowDTO> getRouteMixTimeWindow();
+
+    List<Demo4EnergyRateDTO> getDemo4EnergyRate();
 
 }
