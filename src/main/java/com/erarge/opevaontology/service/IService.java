@@ -14,6 +14,7 @@ import com.erarge.opevaontology.dto.demo4.Demo4EnergyRateDTO;
 import com.erarge.opevaontology.dto.demo5.KpisResponse;
 import com.erarge.opevaontology.dto.demo5.RouteSizeDistributionDTO;
 import com.erarge.opevaontology.dto.demo5.RouteTimeWindowDTO;
+import com.erarge.opevaontology.dto.demo9.Demo9ActivePowerResponseDTO;
 
 public interface IService {
     public Object sparql(String query);
@@ -41,5 +42,7 @@ public interface IService {
     List<RouteTimeWindowDTO> getRouteMixTimeWindow();
 
     List<Demo4EnergyRateDTO> getDemo4EnergyRate();
+
+    Demo9ActivePowerResponseDTO getDemo9ActivePowerSeries();
 
 }

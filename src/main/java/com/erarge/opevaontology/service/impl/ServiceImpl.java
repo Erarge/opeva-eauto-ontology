@@ -34,6 +34,9 @@ import com.erarge.opevaontology.dto.demo4.Demo4WeatherSummaryDTO;
 import com.erarge.opevaontology.dto.demo5.KpisResponse;
 import com.erarge.opevaontology.dto.demo5.RouteSizeDistributionDTO;
 import com.erarge.opevaontology.dto.demo5.RouteTimeWindowDTO;
+import com.erarge.opevaontology.dto.demo9.Demo9ActivePowerPointDTO;
+import com.erarge.opevaontology.dto.demo9.Demo9ActivePowerResponseDTO;
+import com.erarge.opevaontology.dto.demo9.Demo9ActivePowerSummaryDTO;
 import com.erarge.opevaontology.repository.CustomSPARQL;
 import com.erarge.opevaontology.repository.CustomSPARQLDemo5;
 import com.erarge.opevaontology.service.IService;
@@ -202,6 +205,28 @@ public class ServiceImpl implements IService {
             return null;
         }
     }
+
+    private static Long tryParseLong(String s) {
+        try {
+            return Long.parseLong(s);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private static Boolean tryParseBoolean(String s) {
+        if (s == null) {
+            return null;
+        }
+        if ("true".equalsIgnoreCase(s) || "1".equals(s)) {
+            return Boolean.TRUE;
+        }
+        if ("false".equalsIgnoreCase(s) || "0".equals(s)) {
+            return Boolean.FALSE;
+        }
+        return null;
+    }
+
 
     @Override
     @SuppressWarnings("unchecked")
@@ -402,6 +427,69 @@ public class ServiceImpl implements IService {
                 minPowerW,
                 maxPowerW,
                 averagePowerW);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Demo9ActivePowerResponseDTO getDemo9ActivePowerSeries() {
+        String query = QueryBuilderDemo9.buildActivePowerSeriesQuery();
+        Object result = CustomSPARQL.sparqlQueryExecution(query);
+        List<Map<String, String>> rows = (List<Map<String, String>>) result;
+
+        List<Demo9ActivePowerPointDTO> points = rows.stream()
+                .map(this::toDemo9ActivePowerPoint)
+                .filter(point -> point != null)
+                .sorted(Comparator.comparing(Demo9ActivePowerPointDTO::getTimestamp,
+                        Comparator.nullsLast(Long::compareTo)))
+                .collect(Collectors.toList());
+
+        Demo9ActivePowerSummaryDTO summary = buildDemo9ActivePowerSummary(points);
+        return new Demo9ActivePowerResponseDTO(summary, points);
+    }
+
+    private Demo9ActivePowerPointDTO toDemo9ActivePowerPoint(Map<String, String> row) {
+        Long timestamp = tryParseLong(stripDatatypeAndQuotes(row.get("timestamp")));
+        Double activePowerW = tryParseDouble(stripDatatypeAndQuotes(row.get("activePowerW")));
+        Boolean shiftable = tryParseBoolean(stripDatatypeAndQuotes(row.get("isShiftable")));
+
+        if (timestamp == null || activePowerW == null || shiftable == null) {
+            return null;
+        }
+
+        return new Demo9ActivePowerPointDTO(timestamp, activePowerW, shiftable);
+    }
+
+    private Demo9ActivePowerSummaryDTO buildDemo9ActivePowerSummary(List<Demo9ActivePowerPointDTO> points) {
+        if (points == null || points.isEmpty()) {
+            return new Demo9ActivePowerSummaryDTO(0, null, null, 0, 0, 0, 0, 0);
+        }
+
+        long shiftableSampleCount = points.stream().filter(Demo9ActivePowerPointDTO::isShiftable).count();
+        long nonShiftableSampleCount = points.size() - shiftableSampleCount;
+
+        Long startTimestamp = points.stream()
+                .map(Demo9ActivePowerPointDTO::getTimestamp)
+                .min(Long::compareTo)
+                .orElse(null);
+
+        Long endTimestamp = points.stream()
+                .map(Demo9ActivePowerPointDTO::getTimestamp)
+                .max(Long::compareTo)
+                .orElse(null);
+
+        double minActivePowerW = points.stream().mapToDouble(Demo9ActivePowerPointDTO::getActivePowerW).min().orElse(0);
+        double maxActivePowerW = points.stream().mapToDouble(Demo9ActivePowerPointDTO::getActivePowerW).max().orElse(0);
+        double averageActivePowerW = points.stream().mapToDouble(Demo9ActivePowerPointDTO::getActivePowerW).average().orElse(0);
+
+        return new Demo9ActivePowerSummaryDTO(
+                points.size(),
+                startTimestamp,
+                endTimestamp,
+                minActivePowerW,
+                maxActivePowerW,
+                averageActivePowerW,
+                shiftableSampleCount,
+                nonShiftableSampleCount);
     }
 
     @Override
