@@ -12,8 +12,11 @@ import com.erarge.opevaontology.dto.demo3.Demo3DatasetResponse;
 import com.erarge.opevaontology.dto.demo3.Demo3FilterOptionsResponse;
 import com.erarge.opevaontology.dto.demo4.Demo4EnergyRateDTO;
 import com.erarge.opevaontology.dto.demo5.KpisResponse;
+import com.erarge.opevaontology.dto.demo5.RouteDetailDTO;
+import com.erarge.opevaontology.dto.demo5.RouteListItemDTO;
 import com.erarge.opevaontology.dto.demo5.RouteSizeDistributionDTO;
 import com.erarge.opevaontology.dto.demo5.RouteTimeWindowDTO;
+import com.erarge.opevaontology.dto.demo5.VehicleParamDTO;
 import com.erarge.opevaontology.dto.demo9.Demo9ActivePowerResponseDTO;
 
 public interface IService {
@@ -42,6 +45,12 @@ public interface IService {
     List<RouteSizeDistributionDTO> getRouteMixSizeDistribution();
 
     List<RouteTimeWindowDTO> getRouteMixTimeWindow();
+
+    List<RouteListItemDTO> getRouteList();
+
+    RouteDetailDTO getRouteDetail(String routeId);
+
+    List<VehicleParamDTO> getVehicleParams();
 
     List<Demo4EnergyRateDTO> getDemo4EnergyRate();
 

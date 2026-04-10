@@ -5,8 +5,137 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OPEVA E-Auto Ontology Query Interface — Demo 5</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
   <link rel="stylesheet" href="../css/demo.css" />
+  <style>
+    /* ── Route Explorer ── */
+    .route-explorer { margin-top: 2rem; }
+    .route-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: flex-end;
+      margin-bottom: 1rem;
+    }
+    .route-filters label { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; font-weight: 600; }
+    .route-filters select {
+      padding: 6px 10px;
+      border: 1px solid var(--border, #ddd);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      min-width: 160px;
+    }
+    .route-explorer-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 1.2rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .route-explorer-layout { grid-template-columns: 1fr; }
+    }
+    #route-map {
+      height: 500px;
+      border-radius: 10px;
+      border: 1px solid var(--border, #ddd);
+      background: #f0f0f0;
+      position: relative;
+    }
+    .map-routing-status {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.65);
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 12px;
+      z-index: 500;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .route-info-panel {
+      background: #fff;
+      border: 1px solid var(--border, #ddd);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+      font-size: 0.88rem;
+    }
+    .route-info-panel h3 { margin: 0 0 0.7rem; font-size: 1rem; }
+    .route-stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .route-stat { display: flex; flex-direction: column; }
+    .route-stat .label { font-size: 0.75rem; color: #666; }
+    .route-stat .value { font-weight: 700; font-size: 1.05rem; }
+    .route-stat .sub { font-size: 0.7rem; color: #888; margin-top: 1px; }
+    .route-sparql-badge {
+      display: inline-block;
+      background: #eef4ff;
+      color: #2c5ff0;
+      border: 1px solid #c5d8ff;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      padding: 2px 6px;
+      margin-bottom: 0.7rem;
+    }
+    .node-table-wrap { max-height: 260px; overflow-y: auto; margin-top: 0.6rem; }
+    .node-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .node-table th { background: #525151; padding: 4px 6px; text-align: left; position: sticky; top: 0; z-index: 1; }
+    .node-table td { padding: 3px 6px; border-bottom: 1px solid #f0f0f0; }
+    .node-table tr:hover td { background: #fafafa; }
+    .badge-depot  { background:#ffccbc; color:#bf360c; border-radius:3px; padding:1px 5px; font-size:0.7rem; }
+    .badge-cs     { background:#fff9c4; color:#f57f17; border-radius:3px; padding:1px 5px; font-size:0.7rem; }
+    .badge-cust   { background:#e3f2fd; color:#0d47a1; border-radius:3px; padding:1px 5px; font-size:0.7rem; }
+    .map-legend {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      align-items: center;
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      border: 2px solid rgba(0,0,0,0.25);
+      flex-shrink: 0;
+    }
+    .legend-dot-half {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: linear-gradient(135deg, #e53935 50%, #43a047 50%);
+      border: 2px solid rgba(0,0,0,0.2);
+      flex-shrink: 0;
+    }
+    .map-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #999;
+      font-size: 0.95rem;
+    }
+    /* Permanent node-ID tooltip — no box, just readable text */
+    .node-id-label {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #111;
+      white-space: nowrap;
+      text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff;
+      pointer-events: none;
+    }
+    .node-id-label::before { display: none !important; }
+  </style>
 </head>
 
 <body class="demo-route-planning">
@@ -18,7 +147,7 @@
     <div class="header">
       <h1>Demo 5: Energy Efficient Route Planning for Last Mile Delivery</h1>
       <p>
-        <b>Demo #5</b>’s objective is to propose an energy‑efficient route planning of EVs for last‑mile delivery
+        <b>Demo #5</b>'s objective is to propose an energy‑efficient route planning of EVs for last‑mile delivery
         services. In detail, it offers an advanced EV route planning solution to enhance energy efficiency in last‑mile
         deliveries by integrating internal and external data for dynamic routing. By simulating scenarios with EV
         fleets, it demonstrates the benefits of the technology to promote wider EV adoption. This serves as a roadmap
@@ -42,10 +171,10 @@
 
       <p class="mt-10">
         The route optimization is also tested for missions of autonomous delivery solutions in last‑mile delivery (as
-        shown in Figure 2). LOXO’s advanced autonomous vehicle technology with its logistic partner extensive logistics
+        shown in Figure 2). LOXO's advanced autonomous vehicle technology with its logistic partner extensive logistics
         expertise, the project redefines last‑ and middle‑mile delivery processes (as shown in Figure 3). Through the
         OPEVA project, the necessary groundwork, including data collection, simulation, and the training of the
-        LOXOFuser—a critical element of LOXO’s autonomous driving software—will be laid.
+        LOXOFuser—a critical element of LOXO's autonomous driving software—will be laid.
       </p>
 
       <div class="figures-row">
@@ -73,18 +202,16 @@
         <div class="perf-muted mt-8" id="perf-note"></div>
       </div>
 
-      <!-- ===== Demo 5 Overview (KPIs + Charts) ===== -->
+      <!-- ===== Demo 5 Overview (KPIs only) ===== -->
       <div class="results-section section-stack-tight">
         <h2>Demo 5 Overview</h2>
-
-        <!-- KPI Row -->
         <div id="demo5-kpis" class="kpi-row">
           <div class="kpi-card">
             <div class="kpi-title">Routes</div>
             <div class="kpi-value" id="kpi-routes">-</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-title">Nodes</div>
+            <div class="kpi-title">Unique Nodes</div>
             <div class="kpi-value" id="kpi-nodes">-</div>
           </div>
           <div class="kpi-card">
@@ -94,6 +221,7 @@
           <div class="kpi-card">
             <div class="kpi-title">Charging Stations</div>
             <div class="kpi-value" id="kpi-cs">-</div>
+            <div style="font-size:0.7rem;color:#888;margin-top:2px;" id="kpi-cs-note"></div>
           </div>
           <div class="kpi-card">
             <div class="kpi-title">Depots</div>
@@ -101,42 +229,151 @@
           </div>
         </div>
 
-        <!-- Charts -->
-        <div class="chart-container-wrapper">
-          <div class="chart-container">
-            <h3>Routes by Size & Distribution</h3>
-            <canvas id="sizeDistChart"></canvas>
-            <div class="download-inline">
-              <button type="button" class="btn-secondary" id="btn-download-sizeDist">Download CSV</button>
-              <span class="muted" id="sizeDist-meta"></span>
-            </div>
-          </div>
+        <!-- EV Parameters panel -->
+        <div id="ev-params-panel" style="display:none; margin-top:1rem;">
+          <h3 style="margin:0 0 0.6rem; font-size:0.95rem;">Assigned Vehicle Parameters — <code>:EV_DEFAULT</code></h3>
+          <div id="ev-params-grid" style="
+            display:flex; flex-wrap:wrap; gap:0.6rem 1.2rem;
+            font-size:0.85rem;
+          "></div>
         </div>
-
-        <div class="chart-container-wrapper">
-          <div class="chart-container">
-            <h3>Routes by Time Window</h3>
-            <canvas id="twChart"></canvas>
-            <div class="download-inline">
-              <button type="button" class="btn-secondary" id="btn-download-tw">Download CSV</button>
-              <span class="muted" id="tw-meta"></span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Compact tables -->
-        <div id="sizeDistTable" class="table-container mt-12"></div>
-        <div id="twTable" class="table-container mt-12"></div>
       </div>
       <!-- ===== /Demo 5 Overview ===== -->
+
+      <!-- ===== Route Explorer ===== -->
+      <div class="results-section route-explorer">
+        <h2>Route Explorer</h2>
+        <p style="margin:0 0 1rem; color:#555; font-size:0.9rem;">
+          Select a route scenario to visualise delivery stops on the map. The route path follows real roads (via OSRM).
+          Summary statistics are produced by a smart SPARQL aggregation query over the ontology.
+          The depot node also acts as a charging station — this is reflected in the charging station count below.
+        </p>
+
+        <!-- Filters -->
+        <div class="route-filters">
+          <label>
+            Distribution type
+            <select id="filter-dist">
+              <option value="">All</option>
+              <option value="C">C — Clustered</option>
+              <option value="R">R — Random</option>
+              <option value="RC">RC — Random-Clustered</option>
+            </select>
+          </label>
+          <label>
+            Customer size
+            <select id="filter-size">
+              <option value="">All</option>
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="40">40</option>
+              <option value="60">60</option>
+            </select>
+          </label>
+          <label>
+            Time window
+            <select id="filter-tw">
+              <option value="">All</option>
+              <option value="1">TW1 — Wide</option>
+              <option value="2">TW2 — Medium</option>
+              <option value="3">TW3 — Narrow</option>
+            </select>
+          </label>
+          <label>
+            Route
+            <select id="route-select" style="min-width:220px;">
+              <option value="">— loading routes —</option>
+            </select>
+          </label>
+          <button type="button" class="btn-primary" id="btn-load-route">Show on Map</button>
+        </div>
+
+        <!-- Map + Info panel side-by-side -->
+        <div class="route-explorer-layout">
+          <div>
+            <div id="route-map">
+              <div class="map-placeholder" id="map-placeholder">Select a route and click "Show on Map"</div>
+            </div>
+            <div class="map-legend" id="map-legend" style="display:none;">
+              <div class="legend-item"><div class="legend-dot-half"></div> Depot (also Charging Station)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#1e88e5;"></div> Customer</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#bdbdbd; border-color:#66bb6a; border-style:dashed;"></div> Charging Station (available)</div>
+              <div class="legend-item" style="gap:6px;">
+                <svg width="28" height="10"><line x1="0" y1="5" x2="28" y2="5" stroke="#1e88e5" stroke-width="2.5" stroke-dasharray="5,3"/></svg>
+                Road route (sorted by TW open)
+              </div>
+            </div>
+          </div>
+
+          <div class="route-info-panel" id="route-info-panel">
+            <h3 id="info-route-id">Route summary</h3>
+            <div id="info-empty" style="color:#999; font-size:0.85rem;">No route loaded yet.</div>
+            <div id="info-content" style="display:none;">
+              <span class="route-sparql-badge">Smart SPARQL aggregation</span>
+              <div class="route-stat-grid">
+                <div class="route-stat">
+                  <span class="label">Distribution</span>
+                  <span class="value" id="stat-dist">-</span>
+                </div>
+                <div class="route-stat">
+                  <span class="label">Customers</span>
+                  <span class="value" id="stat-size">-</span>
+                </div>
+                <div class="route-stat">
+                  <span class="label">Time Window</span>
+                  <span class="value" id="stat-tw">-</span>
+                </div>
+                <div class="route-stat">
+                  <span class="label">Charging Stations</span>
+                  <span class="value" id="stat-cs">-</span>
+                  <span class="sub" id="stat-cs-note"></span>
+                </div>
+                <div class="route-stat">
+                  <span class="label">Total Demand</span>
+                  <span class="value" id="stat-demand">-</span>
+                </div>
+                <div class="route-stat">
+                  <span class="label">Total Service Time</span>
+                  <span class="value" id="stat-service">-</span>
+                </div>
+                <div class="route-stat">
+                  <span class="label">Avg TW Width</span>
+                  <span class="value" id="stat-avg-tw">-</span>
+                </div>
+                <div class="route-stat">
+                  <span class="label">Tightest / Widest</span>
+                  <span class="value" id="stat-tw-range">-</span>
+                </div>
+              </div>
+
+              <div style="font-weight:600; margin-bottom:4px; font-size:0.82rem;">Stop sequence (by TW open)</div>
+              <div class="node-table-wrap">
+                <table class="node-table">
+                  <thead>
+                    <tr>
+                      <th>#</th><th>ID</th><th>Type</th><th>Demand</th><th>Svc (s)</th><th>TW open</th><th>TW close</th>
+                    </tr>
+                  </thead>
+                  <tbody id="node-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ===== /Route Explorer ===== -->
 
     </div><!-- /content -->
   </div><!-- /container -->
 
   <script>
-    const API_BASE_URL = window.location.origin;
+    const API_BASE_URL = (() => {
+      const i = window.location.pathname.indexOf('/demo/');
+      return window.location.origin + (i > 0 ? window.location.pathname.substring(0, i) : '');
+    })();
 
-    // ---- PERF INSTRUMENTATION (same pattern as your other demos) ----
+    // ---- PERF INSTRUMENTATION ----
     const perf = { marks: {}, measures: {}, meta: {} };
     function nowMs() { return performance.now(); }
     function mark(name) { perf.marks[name] = nowMs(); }
@@ -145,12 +382,6 @@
       if (Number.isFinite(s) && Number.isFinite(e)) perf.measures[name] = e - s;
     }
     function fmtMs(v) { if (!Number.isFinite(v)) return '-'; return v < 1000 ? `${v.toFixed(1)} ms` : `${(v / 1000).toFixed(2)} s`; }
-    function fmtBytes(bytes) {
-      if (!Number.isFinite(bytes)) return '-';
-      const u = ['B', 'KB', 'MB', 'GB']; let i = 0, b = bytes;
-      while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
-      return `${b.toFixed(i === 0 ? 0 : 2)} ${u[i]}`;
-    }
     function resetPerf() { perf.marks = {}; perf.measures = {}; perf.meta = {}; renderPerfPanel(); }
     function renderPerfPanel() {
       const grid = document.getElementById('perf-grid');
@@ -158,187 +389,432 @@
       const note = document.getElementById('perf-note');
       const m = perf.measures;
       const rows = [
-        ['KPI fetch', fmtMs(m.kpi_fetch)],
-        ['SizeDist fetch', fmtMs(m.sizedist_fetch)],
-        ['TimeWindow fetch', fmtMs(m.tw_fetch)],
-        ['Total', fmtMs(m.total)]
+        ['KPI fetch',      fmtMs(m.kpi_fetch)],
+        ['Route list',     fmtMs(m.route_list_fetch)],
+        ['Route detail',   fmtMs(m.route_detail_fetch)],
+        ['OSRM routing',   fmtMs(m.osrm_fetch)],
+        ['Total',          fmtMs(m.total)]
       ];
       grid.innerHTML = rows
-        .filter(([_, v]) => v !== '-' && v !== 'null' && v !== 'undefined')
+        .filter(([, v]) => v !== '-')
         .map(([k, v]) => `<div><strong>${k}</strong></div><div>${v}</div>`).join('');
       note.textContent = perf.meta.note ?? '';
       panel.style.display = grid.innerHTML.trim() ? 'block' : 'none';
     }
 
     // ---- Notifications ----
-    function showError(msg) { const el = document.getElementById('error-message'); el.textContent = msg; el.style.display = 'block'; document.getElementById('success-message').style.display = 'none'; }
+    function showError(msg)   { const el = document.getElementById('error-message');   el.textContent = msg; el.style.display = 'block'; document.getElementById('success-message').style.display = 'none'; }
     function showSuccess(msg) { const el = document.getElementById('success-message'); el.textContent = msg; el.style.display = 'block'; document.getElementById('error-message').style.display = 'none'; }
-    function hideMessages() { document.getElementById('error-message').style.display = 'none'; document.getElementById('success-message').style.display = 'none'; }
+    function hideMessages()   { document.getElementById('error-message').style.display = 'none'; document.getElementById('success-message').style.display = 'none'; }
 
     // ---- HTTP helpers ----
     async function httpGet(url) {
-      const r = await fetch(url, { method: 'GET' });
+      const r = await fetch(url);
       if (!r.ok) throw new Error(`HTTP ${r.status} @ ${url}`);
-      return await r.json();
+      return r.json();
     }
-    function approxBytesOfJson(obj) { try { const s = JSON.stringify(obj); return new Blob([s]).size; } catch { return null; } }
 
-    // ---- Charts ----
-    let sizeDistChart = null;
-    let twChart = null;
-
-    // Data caches (for CSV downloads)
-    let cacheSizeDist = [];
-    let cacheTw = [];
+    let allRoutes = [];
 
     window.addEventListener('DOMContentLoaded', () => {
-      loadDemo5Overview().catch(err => { console.error(err); showError(err.message || 'Failed to load'); });
-      // Wire CSV buttons
-      document.getElementById('btn-download-sizeDist')?.addEventListener('click', () => downloadCSV(cacheSizeDist, 'demo5_routes_by_size_distribution.csv'));
-      document.getElementById('btn-download-tw')?.addEventListener('click', () => downloadCSV(cacheTw, 'demo5_routes_by_timewindow.csv'));
+      loadDemo5Overview().catch(err => { console.error(err); showError(err.message || 'Failed to load KPIs'); });
+      loadRouteList().catch(err => console.error('Route list error:', err));
+      loadVehicleParams().catch(err => console.error('Vehicle params error:', err));
+
+      document.getElementById('btn-load-route')?.addEventListener('click', onLoadRoute);
+      ['filter-dist', 'filter-size', 'filter-tw'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', rebuildRouteSelect);
+      });
     });
 
+    // =========================================================
+    //  OVERVIEW — KPIs only
+    // =========================================================
     async function loadDemo5Overview() {
       resetPerf(); hideMessages();
       mark('total_start');
-
-      // KPIs
       mark('kpi_fetch_start');
       const kpis = await httpGet(`${API_BASE_URL}/api/demo5/kpis`);
       mark('kpi_fetch_end'); measure('kpi_fetch', 'kpi_fetch_start', 'kpi_fetch_end');
       renderKpis(kpis);
-
-      // Size & Distribution
-      mark('sizedist_fetch_start');
-      const sizeDist = await httpGet(`${API_BASE_URL}/api/demo5/route-mix/size-distribution`);
-      mark('sizedist_fetch_end'); measure('sizedist_fetch', 'sizedist_fetch_start', 'sizedist_fetch_end');
-      cacheSizeDist = Array.isArray(sizeDist) ? sizeDist : [];
-      renderSizeDistribution(cacheSizeDist);
-
-      // Time Window
-      mark('tw_fetch_start');
-      const twMix = await httpGet(`${API_BASE_URL}/api/demo5/route-mix/time-window`);
-      mark('tw_fetch_end'); measure('tw_fetch', 'tw_fetch_start', 'tw_fetch_end');
-      cacheTw = Array.isArray(twMix) ? twMix : [];
-      renderTimeWindowMix(cacheTw);
-
-      perf.meta.note = 'Overview fetched from /api/demo5/*';
       mark('total_end'); measure('total', 'total_start', 'total_end');
+      perf.meta.note = 'KPIs from /api/demo5/kpis';
       renderPerfPanel();
       showSuccess('Demo 5 overview loaded.');
     }
 
     function renderKpis(k) {
       const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v ?? '-'; };
-      set('kpi-routes', k?.routes ?? '-');
-      set('kpi-nodes', k?.nodes ?? '-');
-      set('kpi-customers', k?.customers ?? '-');
-      set('kpi-cs', k?.chargingStations ?? '-');
-      set('kpi-depots', k?.depots ?? '-');
+      set('kpi-routes',    k?.routes     ?? '-');
+      set('kpi-nodes',     k?.nodes      ?? '-');
+      set('kpi-customers', k?.customers  ?? '-');
+      set('kpi-depots',    k?.depots     ?? '-');
+
+      // Charging stations: dedicated CS nodes + depot nodes (depot also acts as CS)
+      const cs     = k?.chargingStations ?? 0;
+      const depots = k?.depots           ?? 0;
+      const total  = cs + depots;
+      set('kpi-cs', total);
+      const note = document.getElementById('kpi-cs-note');
+      if (note && depots > 0) note.textContent = `${cs} dedicated + ${depots} depot`;
     }
 
-    function renderSizeDistribution(rows) {
-      // rows: [{size:int, distribution:"R|C|RC", routes:int}]
-      const labels = buildSizeDistLabels(rows); // e.g., ["5-R","5-C","5-RC","10-R",...]
-      const data = labels.map(lbl => {
-        const [sizeStr, dist] = lbl.split('-');
-        const size = parseInt(sizeStr, 10);
-        const hit = rows.find(r => r.size === size && r.distribution === dist);
-        return hit ? hit.routes : 0;
+    // Known property-key → display metadata
+    const EV_PARAM_META = {
+      vehicle_avg_velocity:     { symbol: 'V',    label: 'Avg. Velocity',          unit: 'm/s',  note: '45 km/h' },
+      vehicle_load_capacity:    { symbol: 'C',    label: 'Load Capacity',          unit: 'kg'               },
+      vehicle_battery_capacity: { symbol: 'Q',    label: 'Battery Capacity',       unit: 'kWh', note: '3000 kWs' },
+      energy_consumption_rate:  { symbol: 'h(r)', label: 'Energy Consumption Rate', unit: ''                },
+      battery_recharging_rate:  { symbol: 'g',    label: 'Battery Recharging Rate', unit: ''                },
+    };
+
+    async function loadVehicleParams() {
+      const params = await httpGet(`${API_BASE_URL}/api/demo5/vehicle`);
+      if (!Array.isArray(params) || params.length === 0) return;
+
+      const grid  = document.getElementById('ev-params-grid');
+      const panel = document.getElementById('ev-params-panel');
+      grid.innerHTML = '';
+
+      params.forEach(({ key, value }) => {
+        const meta = EV_PARAM_META[key];
+        const symbol = meta?.symbol ?? key;
+        const label  = meta?.label  ?? key;
+        const unit   = meta?.unit   ? ` ${meta.unit}` : '';
+        const note   = meta?.note   ? ` <span style="color:#888;font-size:0.75rem;">(${meta.note})</span>` : '';
+        grid.insertAdjacentHTML('beforeend',
+          `<div style="background:#f8f9ff;border:1px solid #dce4ff;border-radius:6px;padding:6px 10px;min-width:140px;">
+            <div style="font-size:0.7rem;color:#666;">${label}</div>
+            <div style="font-weight:700;font-size:1rem;">
+              <span style="font-family:monospace;color:#1a237e;">${symbol}</span>
+              = ${value}${unit}${note}
+            </div>
+          </div>`
+        );
       });
 
-      const bytes = approxBytesOfJson(rows);
-      const meta = document.getElementById('sizeDist-meta');
-      if (meta) meta.textContent = `Rows: ${rows.length}, Payload: ${fmtBytes(bytes)}`;
+      panel.style.display = params.length > 0 ? 'block' : 'none';
+    }
 
-      const ctx = document.getElementById('sizeDistChart').getContext('2d');
-      if (sizeDistChart) sizeDistChart.destroy();
-      sizeDistChart = new Chart(ctx, {
-        type: 'bar',
-        data: { labels, datasets: [{ label: 'Routes', data, backgroundColor: 'rgba(54, 162, 235, 0.6)' }] },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: true, position: 'top' } },
-          scales: {
-            x: { title: { display: true, text: 'Size-Distribution' } },
-            y: { beginAtZero: true, title: { display: true, text: 'Routes' } }
-          }
-        }
+    // =========================================================
+    //  ROUTE EXPLORER
+    // =========================================================
+    async function loadRouteList() {
+      mark('route_list_fetch_start');
+      allRoutes = await httpGet(`${API_BASE_URL}/api/demo5/routes`);
+      mark('route_list_fetch_end');
+      measure('route_list_fetch', 'route_list_fetch_start', 'route_list_fetch_end');
+      rebuildRouteSelect();
+    }
+
+    function rebuildRouteSelect() {
+      const dist = document.getElementById('filter-dist').value;
+      const size = document.getElementById('filter-size').value;
+      const tw   = document.getElementById('filter-tw').value;
+
+      const filtered = allRoutes.filter(r =>
+        (!dist || r.distribution === dist) &&
+        (!size || String(r.size) === size) &&
+        (!tw   || String(r.tw) === tw)
+      );
+
+      const sel = document.getElementById('route-select');
+      sel.innerHTML = filtered.length === 0
+        ? '<option value="">— no matching routes —</option>'
+        : filtered.map(r =>
+            `<option value="${r.routeId}">${r.routeId}  (${distLabel(r.distribution)}, ${r.size} cust., TW${r.tw})</option>`
+          ).join('');
+    }
+
+    function distLabel(d) {
+      return { C: 'Clustered', R: 'Random', RC: 'Random-Clustered' }[d] || d;
+    }
+    function twLabel(tw) {
+      return { 1: 'Wide (TW1)', 2: 'Medium (TW2)', 3: 'Narrow (TW3)' }[tw] || `TW${tw}`;
+    }
+
+    // =========================================================
+    //  LEAFLET MAP
+    // =========================================================
+    let leafletMap = null;
+    let markerLayer = null;
+    let routePolylines = [];
+
+    function ensureMap() {
+      if (leafletMap) return;
+      document.getElementById('map-placeholder')?.remove();
+      leafletMap = L.map('route-map').setView([39.75, 30.48], 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+      }).addTo(leafletMap);
+      markerLayer = L.layerGroup().addTo(leafletMap);
+    }
+
+    function nodeColor(type) {
+      if (type === 'd')  return '#e53935';  // depot — red (also CS)
+      if (type === 'cs') return '#bdbdbd';  // charging station — muted gray (available, not a scheduled stop)
+      return '#1e88e5';                     // customer — blue
+    }
+
+    // Depot is shown as a half-red / half-green circle to indicate it is also a CS
+    function makeCircleMarker(node) {
+      let marker;
+      if (node.nodeType === 'd') {
+        // Custom divIcon: split red/green circle for depot = CS, with ID label below
+        marker = L.marker([node.lat, node.lon], {
+          icon: L.divIcon({
+            className: '',
+            html: `<div style="text-align:center;">
+              <div style="
+                width:22px; height:22px; border-radius:50%;
+                background: conic-gradient(#e53935 0deg 180deg, #43a047 180deg 360deg);
+                border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.4);
+                margin:0 auto;
+              "></div>
+              <div style="
+                font-size:0.65rem; font-weight:700; color:#111; white-space:nowrap;
+                text-shadow:0 0 3px #fff,0 0 3px #fff; margin-top:2px; line-height:1;
+              ">${node.nodeId}</div>
+            </div>`,
+            iconSize: [44, 34],
+            iconAnchor: [22, 11]
+          })
+        });
+        marker.bindPopup(
+          `<b>Depot / Charging Station</b> — Node ${node.nodeId}<br>` +
+          `<em style="font-size:0.78rem;">This node serves as both the route depot and a charging station.</em><br>` +
+          `<small>(${node.lat.toFixed(6)}, ${node.lon.toFixed(6)})</small>`
+        );
+      } else {
+        const radius = node.nodeType === 'cs' ? 7 : 6;
+        // CS nodes: muted fill + dashed green stroke to signal "available, not a scheduled stop"
+        const isCs = node.nodeType === 'cs';
+        marker = L.circleMarker([node.lat, node.lon], {
+          radius,
+          fillColor: nodeColor(node.nodeType),
+          color: isCs ? '#66bb6a' : '#fff',
+          weight: isCs ? 2 : 2,
+          opacity: 1,
+          fillOpacity: isCs ? 0.55 : 0.9,
+          dashArray: isCs ? '4,3' : null
+        });
+        const typeStr = node.nodeType === 'cs' ? 'Charging Station' : 'Customer';
+        const twWidth = node.latest - node.earliest;
+        marker.bindPopup(
+          `<b>${typeStr}</b> — Node ${node.nodeId}<br>` +
+          (node.demand > 0 ? `Demand: <b>${node.demand}</b><br>` : '') +
+          (node.serviceTime > 0 ? `Service time: ${node.serviceTime} s<br>` : '') +
+          (node.nodeType === 'c' ? `Time window: [${node.earliest} – ${node.latest}] (width: ${twWidth} s)<br>` : '') +
+          `<small>(${node.lat.toFixed(6)}, ${node.lon.toFixed(6)})</small>`
+        );
+        // Permanent ID label next to the circle
+        marker.bindTooltip(node.nodeId, {
+          permanent: true,
+          direction: 'right',
+          offset: [radius + 3, 0],
+          className: 'node-id-label'
+        });
+      }
+      return marker;
+    }
+
+    // ---- OSRM road-following route ----
+    // Returns array of [lat, lon] following road geometry, or null on failure.
+    async function fetchOsrmRoute(waypoints) {
+      // waypoints: array of {lat, lon}
+      if (waypoints.length < 2) return null;
+      // OSRM expects lon,lat pairs
+      const coords = waypoints.map(w => `${w.lon},${w.lat}`).join(';');
+      const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+      try {
+        mark('osrm_fetch_start');
+        const data = await fetch(url).then(r => r.ok ? r.json() : null);
+        mark('osrm_fetch_end'); measure('osrm_fetch', 'osrm_fetch_start', 'osrm_fetch_end');
+        if (!data || data.code !== 'Ok' || !data.routes?.length) return null;
+        // GeoJSON coords are [lon, lat] — flip to [lat, lon] for Leaflet
+        return data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+      } catch {
+        return null;
+      }
+    }
+
+    function setRoutingStatus(msg) {
+      let el = document.getElementById('map-routing-status');
+      if (!msg) { if (el) el.remove(); return; }
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'map-routing-status';
+        el.className = 'map-routing-status';
+        document.getElementById('route-map').appendChild(el);
+      }
+      el.textContent = msg;
+    }
+
+    // Add directional arrowheads to a polyline using leaflet-polylinedecorator
+    function addArrows(polyline) {
+      if (typeof L.polylineDecorator === 'undefined') return;
+      const decorator = L.polylineDecorator(polyline, {
+        patterns: [{
+          offset: '10%',
+          repeat: '20%',
+          symbol: L.Symbol.arrowHead({
+            pixelSize: 10,
+            polygon: false,
+            pathOptions: {
+              stroke: true,
+              color: '#1565c0',
+              weight: 2.5,
+              opacity: 0.85
+            }
+          })
+        }]
+      }).addTo(leafletMap);
+      routePolylines.push(decorator);
+    }
+
+    async function renderRouteOnMap(detail) {
+      ensureMap();
+      markerLayer.clearLayers();
+      routePolylines.forEach(p => leafletMap.removeLayer(p));
+      routePolylines = [];
+
+      const nodes = detail.nodes || [];
+      const allLatLngs = [];
+
+      nodes.forEach(n => {
+        markerLayer.addLayer(makeCircleMarker(n));
+        allLatLngs.push([n.lat, n.lon]);
       });
 
-      // compact table
-      const html =
-        `<table><thead><tr><th>Size</th><th>Distribution</th><th>Routes</th></tr></thead>
-         <tbody>${rows.map(r => `<tr><td>${r.size}</td><td>${r.distribution}</td><td>${r.routes}</td></tr>`).join('')}</tbody></table>`;
-      const host = document.getElementById('sizeDistTable');
-      if (host) host.innerHTML = html;
+      if (allLatLngs.length > 0) {
+        leafletMap.fitBounds(L.latLngBounds(allLatLngs), { padding: [30, 30] });
+      }
+
+      document.getElementById('map-legend').style.display = 'flex';
+
+      // Build stop sequence: depot → customers sorted by earliest TW → depot
+      const depot     = nodes.find(n => n.nodeType === 'd');
+      const customers = nodes.filter(n => n.nodeType === 'c').sort((a, b) => a.earliest - b.earliest);
+
+      if (!depot || customers.length === 0) return;
+
+      const waypoints = [depot, ...customers, depot];
+
+      // Try OSRM road-following route
+      setRoutingStatus('Fetching road route…');
+      const roadCoords = await fetchOsrmRoute(waypoints);
+      setRoutingStatus(null);
+
+      if (roadCoords) {
+        const pl = L.polyline(roadCoords, {
+          color: '#1e88e5', weight: 3, opacity: 0.7, dashArray: '6,4'
+        }).addTo(leafletMap);
+        routePolylines.push(pl);
+        addArrows(pl);
+      } else {
+        // Fallback: straight-line dashed polyline
+        const fallbackCoords = waypoints.map(w => [w.lat, w.lon]);
+        const pl = L.polyline(fallbackCoords, {
+          color: '#1e88e5', weight: 2, opacity: 0.5, dashArray: '6,4'
+        }).addTo(leafletMap);
+        routePolylines.push(pl);
+        addArrows(pl);
+        console.warn('OSRM unavailable — using straight-line fallback');
+      }
     }
-    function buildSizeDistLabels(rows) {
-      const sizes = Array.from(new Set(rows.map(r => r.size))).sort((a, b) => a - b);
-      const dists = ['R', 'C', 'RC'];
-      const out = [];
-      sizes.forEach(s => dists.forEach(d => out.push(`${s}-${d}`)));
-      return out;
-    }
 
-    function renderTimeWindowMix(rows) {
-      // rows: [{tw:int(1|2|3), routes:int}]
-      const labelOf = tw => ({ 1: 'Wide', 2: 'Medium', 3: 'Narrow' }[tw] || String(tw));
-      const labels = rows.map(x => labelOf(x.tw));
-      const data = rows.map(x => x.routes);
+    function renderInfoPanel(detail) {
+      document.getElementById('info-route-id').textContent = detail.routeId;
+      document.getElementById('info-empty').style.display   = 'none';
+      document.getElementById('info-content').style.display = 'block';
 
-      const bytes = approxBytesOfJson(rows);
-      const meta = document.getElementById('tw-meta');
-      if (meta) meta.textContent = `Rows: ${rows.length}, Payload: ${fmtBytes(bytes)}`;
+      document.getElementById('stat-dist').textContent    = distLabel(detail.distribution);
+      document.getElementById('stat-size').textContent    = detail.numCustomers;
+      document.getElementById('stat-tw').textContent      = twLabel(detail.tw);
+      document.getElementById('stat-demand').textContent  = detail.totalDemand + ' units';
+      document.getElementById('stat-service').textContent = fmtSec(detail.totalServiceTimeSec);
+      document.getElementById('stat-avg-tw').textContent  = Math.round(detail.avgTimeWindowWidth) + ' s';
+      document.getElementById('stat-tw-range').textContent = `${detail.tightestWindow} / ${detail.widestWindow} s`;
 
-      const ctx = document.getElementById('twChart').getContext('2d');
-      if (twChart) twChart.destroy();
-      twChart = new Chart(ctx, {
-        type: 'bar',
-        data: { labels, datasets: [{ label: 'Routes', data, backgroundColor: 'rgba(255, 159, 64, 0.6)' }] },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: true, position: 'top' } },
-          scales: {
-            x: { title: { display: true, text: 'Time Window' } },
-            y: { beginAtZero: true, title: { display: true, text: 'Routes' } }
-          }
-        }
+      // Charging stations: SPARQL returns dedicated CS nodes; depot also functions as one
+      const depotCount = (detail.nodes || []).filter(n => n.nodeType === 'd').length;
+      const totalCs    = detail.numChargingStations + depotCount;
+      document.getElementById('stat-cs').textContent   = totalCs;
+      document.getElementById('stat-cs-note').textContent =
+        depotCount > 0
+          ? `${detail.numChargingStations} dedicated + ${depotCount} depot`
+          : '';
+
+      // Node table — sequence: depot, then customers by TW open, then CS
+      const tbody = document.getElementById('node-table-body');
+      const typeLabel  = t => t === 'd' ? 'Depot/CS' : t === 'cs' ? 'CS' : 'Cust.';
+      const badgeClass = t => t === 'd' ? 'badge-depot' : t === 'cs' ? 'badge-cs' : 'badge-cust';
+
+      const sorted = [...(detail.nodes || [])].sort((a, b) => {
+        const order = { d: 0, c: 1, cs: 2 };
+        if (order[a.nodeType] !== order[b.nodeType]) return order[a.nodeType] - order[b.nodeType];
+        return a.earliest - b.earliest;
       });
 
-      // compact table
-      const html =
-        `<table><thead><tr><th>Time Window</th><th>Routes</th></tr></thead>
-         <tbody>${rows.map(r => `<tr><td>${labelOf(r.tw)}</td><td>${r.routes}</td></tr>`).join('')}</tbody></table>`;
-      const host = document.getElementById('twTable');
-      if (host) host.innerHTML = html;
+      // Assign stop sequence numbers only to customers (1-based)
+      let stopSeq = 0;
+      tbody.innerHTML = sorted.map(n => {
+        const seq = n.nodeType === 'c' ? ++stopSeq : '—';
+        return `<tr>
+          <td>${seq}</td>
+          <td>${n.nodeId}</td>
+          <td><span class="${badgeClass(n.nodeType)}">${typeLabel(n.nodeType)}</span></td>
+          <td>${n.demand > 0 ? n.demand : '—'}</td>
+          <td>${n.serviceTime > 0 ? n.serviceTime : '—'}</td>
+          <td>${n.nodeType === 'c' ? n.earliest : '—'}</td>
+          <td>${n.nodeType === 'c' ? n.latest : '—'}</td>
+        </tr>`;
+      }).join('');
     }
 
-    // ---- CSV helpers ----
-    function downloadCSV(data, filename) {
-      if (!Array.isArray(data) || data.length === 0) { showError('No data to download.'); return; }
-      const keys = Array.from(
-        data.reduce((set, row) => { Object.keys(row || {}).forEach(k => set.add(k)); return set; }, new Set())
-      ).sort();
+    function fmtSec(s) {
+      if (!s) return '0 s';
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const sec = s % 60;
+      if (h > 0) return `${h}h ${m}m`;
+      if (m > 0) return `${m}m ${sec}s`;
+      return `${sec} s`;
+    }
 
-      const esc = v => {
-        const s = v == null ? '' : String(v);
-        const needsQuotes = s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r');
-        const q = s.replace(/"/g, '""');
-        return needsQuotes ? `"${q}"` : q;
-      };
+    async function onLoadRoute() {
+      const routeId = document.getElementById('route-select').value;
+      if (!routeId) { showError('Please select a route first.'); return; }
+      hideMessages();
 
-      const header = keys.map(esc).join(',');
-      const lines = data.map(row => keys.map(k => esc(row?.[k])).join(','));
-      const csv = [header, ...lines].join('\r\n');
+      const btn = document.getElementById('btn-load-route');
+      btn.disabled = true;
+      btn.textContent = 'Loading…';
 
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename || 'export.csv';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      try {
+        mark('route_detail_fetch_start');
+        const detail = await httpGet(`${API_BASE_URL}/api/demo5/route/${encodeURIComponent(routeId)}`);
+        mark('route_detail_fetch_end');
+        measure('route_detail_fetch', 'route_detail_fetch_start', 'route_detail_fetch_end');
+
+        renderInfoPanel(detail);
+        await renderRouteOnMap(detail);  // async — OSRM call inside
+        renderPerfPanel();
+
+        const depotCount = (detail.nodes || []).filter(n => n.nodeType === 'd').length;
+        const totalCs    = detail.numChargingStations + depotCount;
+        showSuccess(
+          `Route ${routeId} loaded — ${detail.numCustomers} customers, ` +
+          `${totalCs} charging station(s) (incl. depot).`
+        );
+      } catch (err) {
+        console.error(err);
+        showError(err.message || 'Failed to load route detail.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Show on Map';
+      }
     }
   </script>
 </body>

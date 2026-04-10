@@ -15,7 +15,7 @@
 	<name>opevaontology</name>
 	<description>Opeva E-Auto Ontology API for Opeva Project</description>
 	<properties>
-		<java.version>20</java.version>
+		<java.version>17</java.version>
 	</properties>
 	<dependencies>
 

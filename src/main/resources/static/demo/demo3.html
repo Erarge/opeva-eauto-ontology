@@ -131,7 +131,10 @@
   </div>
 
   <script>
-    const API_BASE_URL = '';
+    const API_BASE_URL = (() => {
+      const i = window.location.pathname.indexOf('/demo/');
+      return window.location.origin + (i > 0 ? window.location.pathname.substring(0, i) : '');
+    })();
 
     const DEFAULT_QUERY = `PREFIX :    https://cloud.erarge.com.tr/ontologies/eauto
 PREFIX bif: <bif:>

@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,8 +23,11 @@ import com.erarge.opevaontology.dto.demo3.Demo3DatasetResponse;
 import com.erarge.opevaontology.dto.demo3.Demo3FilterOptionsResponse;
 import com.erarge.opevaontology.dto.demo4.Demo4EnergyRateDTO;
 import com.erarge.opevaontology.dto.demo5.KpisResponse;
+import com.erarge.opevaontology.dto.demo5.RouteDetailDTO;
+import com.erarge.opevaontology.dto.demo5.RouteListItemDTO;
 import com.erarge.opevaontology.dto.demo5.RouteSizeDistributionDTO;
 import com.erarge.opevaontology.dto.demo5.RouteTimeWindowDTO;
+import com.erarge.opevaontology.dto.demo5.VehicleParamDTO;
 import com.erarge.opevaontology.dto.demo9.Demo9ActivePowerResponseDTO;
 import com.erarge.opevaontology.service.IService;
 
@@ -100,6 +104,21 @@ public class APIController {
     @GetMapping("/api/demo5/route-mix/time-window")
     public ResponseEntity<List<RouteTimeWindowDTO>> getRouteMixTimeWindow() {
         return ResponseEntity.ok(service.getRouteMixTimeWindow());
+    }
+
+    @GetMapping("/api/demo5/routes")
+    public ResponseEntity<List<RouteListItemDTO>> getRouteList() {
+        return ResponseEntity.ok(service.getRouteList());
+    }
+
+    @GetMapping("/api/demo5/route/{routeId}")
+    public ResponseEntity<RouteDetailDTO> getRouteDetail(@PathVariable String routeId) {
+        return ResponseEntity.ok(service.getRouteDetail(routeId));
+    }
+
+    @GetMapping("/api/demo5/vehicle")
+    public ResponseEntity<List<VehicleParamDTO>> getVehicleParams() {
+        return ResponseEntity.ok(service.getVehicleParams());
     }
 
     @GetMapping("/api/demo4/energy-rate")

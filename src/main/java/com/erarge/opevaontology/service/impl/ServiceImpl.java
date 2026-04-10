@@ -32,8 +32,12 @@ import com.erarge.opevaontology.dto.demo4.Demo4WeatherResponseDTO;
 import com.erarge.opevaontology.dto.demo4.Demo4WeatherSessionDTO;
 import com.erarge.opevaontology.dto.demo4.Demo4WeatherSummaryDTO;
 import com.erarge.opevaontology.dto.demo5.KpisResponse;
+import com.erarge.opevaontology.dto.demo5.RouteDetailDTO;
+import com.erarge.opevaontology.dto.demo5.RouteListItemDTO;
+import com.erarge.opevaontology.dto.demo5.RouteNodeDTO;
 import com.erarge.opevaontology.dto.demo5.RouteSizeDistributionDTO;
 import com.erarge.opevaontology.dto.demo5.RouteTimeWindowDTO;
+import com.erarge.opevaontology.dto.demo5.VehicleParamDTO;
 import com.erarge.opevaontology.dto.demo9.Demo9ActivePowerPointDTO;
 import com.erarge.opevaontology.dto.demo9.Demo9ActivePowerResponseDTO;
 import com.erarge.opevaontology.dto.demo9.Demo9ActivePowerSummaryDTO;
@@ -545,6 +549,103 @@ public class ServiceImpl implements IService {
                 int tw = b.get("tw").asInt();
                 long routes = b.get("routes").asLong();
                 out.add(new RouteTimeWindowDTO(tw, routes));
+            }
+        }
+        return out;
+    }
+
+    @Override
+    public List<RouteListItemDTO> getRouteList() {
+        String sparql = QueryBuilderDemo5.buildRouteListQuery();
+        Object raw = CustomSPARQLDemo5.sparqlQueryExecution(sparql);
+        JsonNode root = toJson(raw);
+        List<RouteListItemDTO> out = new ArrayList<>();
+        if (root.isArray()) {
+            for (JsonNode b : root) {
+                String routeId = b.get("routeId").asText();
+                int size = b.get("size").asInt();
+                String distribution = b.get("distribution").asText();
+                int tw = b.get("tw").asInt();
+                out.add(new RouteListItemDTO(routeId, size, distribution, tw));
+            }
+        }
+        return out;
+    }
+
+    @Override
+    public RouteDetailDTO getRouteDetail(String routeId) {
+        // Fetch nodes
+        String nodesSparql = QueryBuilderDemo5.buildRouteNodesQuery(routeId);
+        Object rawNodes = CustomSPARQLDemo5.sparqlQueryExecution(nodesSparql);
+        JsonNode nodesRoot = toJson(rawNodes);
+
+        List<RouteNodeDTO> nodes = new ArrayList<>();
+        if (nodesRoot.isArray()) {
+            for (JsonNode b : nodesRoot) {
+                String nodeId = b.get("nodeId").asText();
+                String nodeType = b.get("nodeType").asText();
+                double lat = b.get("lat").asDouble();
+                double lon = b.get("lon").asDouble();
+                int demand = b.get("demand").asInt();
+                int serviceTime = b.get("serviceTime").asInt();
+                int earliest = b.get("earliest").asInt();
+                int latest = b.get("latest").asInt();
+                nodes.add(new RouteNodeDTO(nodeId, nodeType, lat, lon, demand, serviceTime, earliest, latest));
+            }
+        }
+
+        // Fetch smart summary stats
+        String summarySparql = QueryBuilderDemo5.buildRouteSummaryQuery(routeId);
+        Object rawSummary = CustomSPARQLDemo5.sparqlQueryExecution(summarySparql);
+        JsonNode summaryRoot = toJson(rawSummary);
+
+        RouteDetailDTO dto = new RouteDetailDTO();
+        dto.setRouteId(routeId);
+        dto.setNodes(nodes);
+
+        // Parse route metadata from routeId (e.g. "ESOGU_C10_TW1")
+        try {
+            String[] parts = routeId.split("_");
+            // parts[1] = "C10" or "R10" or "RC10", parts[2] = "TW1"
+            String distPart = parts[1].replaceAll("[0-9]", "");
+            int sizePart = Integer.parseInt(parts[1].replaceAll("[^0-9]", ""));
+            int twPart = Integer.parseInt(parts[2].replace("TW", ""));
+            dto.setDistribution(distPart);
+            dto.setSize(sizePart);
+            dto.setTw(twPart);
+        } catch (Exception e) {
+            dto.setDistribution("?");
+        }
+
+        if (summaryRoot.isArray() && summaryRoot.size() > 0) {
+            JsonNode s = summaryRoot.get(0);
+            dto.setTotalDemand(s.has("totalDemand") ? s.get("totalDemand").asLong() : 0);
+            dto.setTotalServiceTimeSec(s.has("totalServiceTimeSec") ? s.get("totalServiceTimeSec").asLong() : 0);
+            dto.setNumCustomers(s.has("numCustomers") ? s.get("numCustomers").asInt() : 0);
+            dto.setNumChargingStations(s.has("numChargingStations") ? s.get("numChargingStations").asInt() : 0);
+            dto.setAvgTimeWindowWidth(s.has("avgTimeWindowWidth") ? s.get("avgTimeWindowWidth").asDouble() : 0);
+            dto.setTightestWindow(s.has("tightestWindow") ? s.get("tightestWindow").asInt() : 0);
+            dto.setWidestWindow(s.has("widestWindow") ? s.get("widestWindow").asInt() : 0);
+        }
+
+        return dto;
+    }
+
+    @Override
+    public List<VehicleParamDTO> getVehicleParams() {
+        String sparql = QueryBuilderDemo5.buildVehicleParamsQuery();
+        Object raw = CustomSPARQLDemo5.sparqlQueryExecution(sparql);
+        JsonNode root = toJson(raw);
+        List<VehicleParamDTO> out = new ArrayList<>();
+        if (root.isArray()) {
+            for (JsonNode b : root) {
+                String propUri = b.has("prop") ? b.get("prop").asText() : "";
+                String val     = b.has("val")  ? b.get("val").asText()  : "";
+                // Extract local name from URI (after last '/' or '#')
+                String key = propUri;
+                int slash = Math.max(propUri.lastIndexOf('/'), propUri.lastIndexOf('#'));
+                if (slash >= 0) key = propUri.substring(slash + 1);
+                out.add(new VehicleParamDTO(key, val));
             }
         }
         return out;

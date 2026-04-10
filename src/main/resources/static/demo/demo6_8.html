@@ -159,7 +159,10 @@
   </div>
 
   <script>
-    const API_BASE_URL = window.location.origin;
+    const API_BASE_URL = (() => {
+      const i = window.location.pathname.indexOf('/demo/');
+      return window.location.origin + (i > 0 ? window.location.pathname.substring(0, i) : '');
+    })();
     let efficiencyChart = null;
     let temperatureChart = null;
 
@@ -495,7 +498,7 @@
           mark('chart_render_start');
           generateEfficiencyChart(sessionGroups);
           generateTemperatureChart(sessionGroups);
-          document.getElementById('charts-section').style.display = 'block';
+          document.getElementById('charts-section').classList.remove('hidden');
           mark('chart_render_end');
           measure('chart_render', 'chart_render_start', 'chart_render_end');
 
@@ -508,7 +511,7 @@
 
           resultsContainer.innerHTML = '<p class="results-empty">No results found for the given criteria.</p>';
           resultsCount.textContent = '0 results';
-          document.getElementById('charts-section').style.display = 'none';
+          document.getElementById('charts-section').classList.add('hidden');
           if (efficiencyChart) efficiencyChart.destroy();
           if (temperatureChart) temperatureChart.destroy();
           showSuccess('Query executed successfully, but no results found.');
@@ -577,7 +580,7 @@
       document.getElementById('query-form').reset();
       document.getElementById('results-container').innerHTML = '';
       document.getElementById('results-count').textContent = '';
-      document.getElementById('charts-section').style.display = 'none';
+      document.getElementById('charts-section').classList.add('hidden');
       if (efficiencyChart) { efficiencyChart.destroy(); efficiencyChart = null; }
       if (temperatureChart) { temperatureChart.destroy(); temperatureChart = null; }
       hideMessages();
