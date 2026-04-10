@@ -306,9 +306,11 @@ ORDER BY ?vdiffBin`;
         showError('No data to download.');
         return;
       }
-      const header = 'vdiffBin_mV,avgBalTimeSec';
-      const rows = cachedPoints.map(point => `${point.vdiffBin},${point.avgBalTimeSec}`);
-      downloadBlob([header, ...rows].join(''), 'demo1_balancing_series.csv', 'text / csv; charset = utf - 8; ');
+      const separator = 'sep=;';
+      const header = 'vdiffBin_mV;avgBalTimeSec';
+      const rows = cachedPoints.map(point => `${point.vdiffBin};${point.avgBalTimeSec}`);
+
+      downloadBlob([separator, header, ...rows].join('\r\n'), 'demo1_balancing_series.csv', 'text/csv;charset=utf-8;');
     }
 
     function downloadJson() {
@@ -336,6 +338,7 @@ ORDER BY ?vdiffBin`;
       });
     });
   </script>
+  <script src="../js/image-viewer.js"></script>
 </body>
 
 </html>

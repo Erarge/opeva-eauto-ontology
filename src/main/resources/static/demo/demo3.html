@@ -674,6 +674,7 @@ ORDER BY ?battery ?soc ?f`;
         return;
       }
 
+      const separator = 'sep=;';
       const header = [
         'battery',
         'soc',
@@ -685,12 +686,12 @@ ORDER BY ?battery ?soc ?f`;
       ];
 
       const lines = points.map((p) =>
-        header.map((h) => JSON.stringify(p[h] ?? '')).join(',')
+        header.map((h) => JSON.stringify(p[h] ?? '')).join(';')
       );
 
       downloadFile(
         'demo3_eis_dataset.csv',
-        [header.join(','), ...lines].join('\n'),
+        [separator, header.join(';'), ...lines].join('\n'),
         'text/csv;charset=utf-8;'
       );
     }
@@ -746,6 +747,7 @@ ORDER BY ?battery ?soc ?f`;
       }
     });
   </script>
+  <script src="../js/image-viewer.js"></script>
 </body>
 
 </html>

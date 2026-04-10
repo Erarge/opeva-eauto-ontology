@@ -241,21 +241,21 @@ LIMIT 50`;
       setText('kpiAnomalyCount', n);
 
       if (n === 0) {
-        ['kpiMaxTemp','kpiMinVoltage','kpiBatteryCount','kpiAvgTemp','kpiAvgVoltage','kpiAvgSoc','kpiSocRange'].forEach(id => setText(id, '-'));
+        ['kpiMaxTemp', 'kpiMinVoltage', 'kpiBatteryCount', 'kpiAvgTemp', 'kpiAvgVoltage', 'kpiAvgSoc', 'kpiSocRange'].forEach(id => setText(id, '-'));
         setText('datasetMeta', 'No anomalies found – all readings within safe thresholds.');
         return;
       }
 
       const temps = points.map(p => p.max_temp);
       const volts = points.map(p => p.min_voltage);
-      const socs  = points.map(p => p.soc).filter(v => v !== null);
+      const socs = points.map(p => p.soc).filter(v => v !== null);
       const batteries = new Set(points.map(p => p.batteryId));
 
       const maxT = Math.max(...temps);
       const minV = Math.min(...volts);
-      const avgT = temps.reduce((a,b) => a+b, 0) / n;
-      const avgV = volts.reduce((a,b) => a+b, 0) / n;
-      const avgS = socs.length ? socs.reduce((a,b) => a+b, 0) / socs.length : null;
+      const avgT = temps.reduce((a, b) => a + b, 0) / n;
+      const avgV = volts.reduce((a, b) => a + b, 0) / n;
+      const avgS = socs.length ? socs.reduce((a, b) => a + b, 0) / socs.length : null;
       const minS = socs.length ? Math.min(...socs) : null;
       const maxS = socs.length ? Math.max(...socs) : null;
 
@@ -320,9 +320,9 @@ LIMIT 50`;
       /* Assign a unique colour per battery */
       const uniqueIds = [...new Set(scatterLabels)];
       const palette = [
-        'rgba(239,68,68,0.85)','rgba(59,130,246,0.85)','rgba(16,185,129,0.85)',
-        'rgba(245,158,11,0.85)','rgba(139,92,246,0.85)','rgba(236,72,153,0.85)',
-        'rgba(20,184,166,0.85)','rgba(249,115,22,0.85)','rgba(99,102,241,0.85)',
+        'rgba(239,68,68,0.85)', 'rgba(59,130,246,0.85)', 'rgba(16,185,129,0.85)',
+        'rgba(245,158,11,0.85)', 'rgba(139,92,246,0.85)', 'rgba(236,72,153,0.85)',
+        'rgba(20,184,166,0.85)', 'rgba(249,115,22,0.85)', 'rgba(99,102,241,0.85)',
         'rgba(168,162,158,0.85)'
       ];
       const idColorMap = {};
@@ -474,10 +474,25 @@ LIMIT 50`;
 
     function downloadCsv() {
       const pts = cachedDataset.points;
-      if (!pts.length) { showError('No dataset available for CSV export.'); return; }
-      const header = ['battery','obs','max_temp','min_voltage','soc'];
-      const lines = pts.map(p => [p.battery, p.obs, p.max_temp, p.min_voltage, p.soc].map(v => JSON.stringify(v ?? '')).join(','));
-      downloadFile('demo7_functional_safety.csv', [header.join(','), ...lines].join('\n'), 'text/csv;charset=utf-8;');
+      if (!pts.length) {
+        showError('No dataset available for CSV export.');
+        return;
+      }
+
+      const separator = 'sep=;';
+      const header = ['battery', 'obs', 'max_temp', 'min_voltage', 'soc'];
+
+      const lines = pts.map(p =>
+        [p.battery, p.obs, p.max_temp, p.min_voltage, p.soc]
+          .map(v => JSON.stringify(v ?? ''))
+          .join(';')
+      );
+
+      downloadFile(
+        'demo7_functional_safety.csv',
+        [separator, header.join(';'), ...lines].join('\n'),
+        'text/csv;charset=utf-8;'
+      );
     }
 
     function downloadJson() {
@@ -523,6 +538,7 @@ LIMIT 50`;
       }
     });
   </script>
+  <script src="../js/image-viewer.js"></script>
 </body>
 
 </html>

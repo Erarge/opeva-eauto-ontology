@@ -411,6 +411,10 @@ tbody tr:hover {
   margin-top: 12px;
 }
 
+.table-container {
+  margin-top: 12px;
+}
+
 .mono {
   font-family: Consolas, Monaco, monospace;
   word-break: break-word;
@@ -460,3 +464,47 @@ tbody tr:hover {
 .section-stack-tight {
   margin-top: 8px;
 }
+
+
+
+/* RESIM BUTME */ 
+.demo-img {
+  cursor: zoom-in;
+  transition: transform 0.2s ease;
+}
+
+.demo-img:hover {
+  transform: scale(1.03);
+}
+
+.img-modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+
+  background-color: rgba(0,0,0,0.9);
+
+  overflow-y: auto;   /* ✅ scroll aktif */
+  overflow-x: hidden;
+  padding: 40px 0;
+}
+
+.img-modal img {
+  display: block;
+  margin: auto;
+
+  width: 100%;        /* ✅ full width */
+  height: auto;
+
+  max-width: 1200px;  /* opsiyonel: çok büyümesin */
+}
+
+.img-modal.active {
+  display: block;
+}
+
+/* RESIM BUTME */ 

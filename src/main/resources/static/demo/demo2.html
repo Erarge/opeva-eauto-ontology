@@ -16,8 +16,8 @@
 
   <div class="container">
     <div class="header">
-      <h1>Demo 2: Developing a Battery Pack with Smart BMS, Simulation on HIL system Test and Perform Physical Test with
-        Battery Pack Test Machine</h1>
+      <h1>Developing a Battery Pack with Smart BMS, Simulation on Perform Physical Test with Battery Pack Test Machine
+      </h1>
       <p>
         Validation of the Effectiveness of the OPEVA: (i) Energy-efficient drivetrain, (ii) Accurate range prediction
         and (iii) Efficient charging technologies.
@@ -406,11 +406,16 @@ ORDER BY ?time`;
         return;
       }
 
+      const separator = 'sep=;'; // Excel'e delimiter bilgisini verir
       const header = ['time', 'voltage', 'current', 'powerW'];
-      const lines = points.map((p) => header.map((h) => JSON.stringify(p[h] ?? '')).join(','));
+
+      const lines = points.map((p) =>
+        header.map((h) => JSON.stringify(p[h] ?? '')).join(';')
+      );
+
       downloadFile(
         'demo2_power_series.csv',
-        [header.join(','), ...lines].join('\n'),
+        [separator, header.join(';'), ...lines].join('\n'),
         'text/csv;charset=utf-8;'
       );
     }
@@ -445,6 +450,7 @@ ORDER BY ?time`;
       }
     });
   </script>
+  <script src="../js/image-viewer.js"></script>
 </body>
 
 </html>

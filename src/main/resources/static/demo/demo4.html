@@ -20,7 +20,8 @@
       <p>
         Demo 4 demonstrates and validates the effectiveness of the OPEVA key technologies related to enhancement of
         accurate range prediction, energy-efficient operation and dynamic routing and reliability. This view explores
-        the instantaneous energy consumption rate versus speed, revealing non-linear relationships and the impact of weather conditions.
+        the instantaneous energy consumption rate versus speed, revealing non-linear relationships and the impact of
+        weather conditions.
       </p>
       <div class="figures-row">
         <figure class="figure w60">
@@ -98,7 +99,7 @@
         <div class="toolbar-inline">
           <span class="muted" id="dataTableMeta"></span>
         </div>
-        <div class="table-container" id="sessionTableHost"></div>
+        <div class="table-container" id="dataTableHost"></div>
       </div>
     </div>
   </div>
@@ -317,103 +318,103 @@ ORDER BY ?weather ?frame`;
     }
 
     function aggregateBySpeed(points, weather, binSize = 5) {
-  const bins = {};
+      const bins = {};
 
-  points
-    .filter(p => p.weather === weather)
-    .forEach(p => {
-      const speed = Number(p.speedKmh);
-      const energy = Number(p.energyConsumedKwh);
+      points
+        .filter(p => p.weather === weather)
+        .forEach(p => {
+          const speed = Number(p.speedKmh);
+          const energy = Number(p.energyConsumedKwh);
 
-      if (!Number.isFinite(speed) || !Number.isFinite(energy)) return;
+          if (!Number.isFinite(speed) || !Number.isFinite(energy)) return;
 
-      const bin = Math.floor(speed / binSize) * binSize;
+          const bin = Math.floor(speed / binSize) * binSize;
 
-      if (!bins[bin]) bins[bin] = [];
-      bins[bin].push(energy);
-    });
+          if (!bins[bin]) bins[bin] = [];
+          bins[bin].push(energy);
+        });
 
-  return Object.entries(bins)
-    .map(([bin, values]) => ({
-      x: Number(bin),
-      y: values.reduce((a, b) => a + b, 0) / values.length
-    }))
-    .sort((a, b) => a.x - b.x);
-}
-
-function renderLineChart(points) {
-    const canvas = document.getElementById('energyLineChart');
-    const ctx = canvas.getContext('2d');
-    if (energyLineChart) energyLineChart.destroy();
-
-    if (!points.length) {
-      energyLineChart = null;
-      return;
+      return Object.entries(bins)
+        .map(([bin, values]) => ({
+          x: Number(bin),
+          y: values.reduce((a, b) => a + b, 0) / values.length
+        }))
+        .sort((a, b) => a.x - b.x);
     }
 
-    const weatherLabels = [...new Set(points.map(p => p.weather))];
+    function renderLineChart(points) {
+      const canvas = document.getElementById('energyLineChart');
+      const ctx = canvas.getContext('2d');
+      if (energyLineChart) energyLineChart.destroy();
 
-    const datasets = weatherLabels.map((weather, i) => {
-      const color = WEATHER_COLORS[i % WEATHER_COLORS.length];
+      if (!points.length) {
+        energyLineChart = null;
+        return;
+      }
 
-      const aggregatedData = aggregateBySpeed(points, weather, 5);
+      const weatherLabels = [...new Set(points.map(p => p.weather))];
 
-      return {
-        label: weather,
-        data: aggregatedData,
-        borderColor: color.replace('0.8', '1'),
-        backgroundColor: color,
-        borderWidth: 2,
-        fill: false,
-        tension: 0.3,          // smooth curve
-        pointRadius: 3,        // small visible points
-        pointHoverRadius: 5
-      };
-    });
+      const datasets = weatherLabels.map((weather, i) => {
+        const color = WEATHER_COLORS[i % WEATHER_COLORS.length];
 
-    energyLineChart = new Chart(ctx, {
-      type: 'line',
-      data: { datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        parsing: false, // IMPORTANT: because we use {x,y}
+        const aggregatedData = aggregateBySpeed(points, weather, 5);
 
-        plugins: {
-          legend: {
-            display: true,
-            position: 'top'
+        return {
+          label: weather,
+          data: aggregatedData,
+          borderColor: color.replace('0.8', '1'),
+          backgroundColor: color,
+          borderWidth: 2,
+          fill: false,
+          tension: 0.3,          // smooth curve
+          pointRadius: 3,        // small visible points
+          pointHoverRadius: 5
+        };
+      });
+
+      energyLineChart = new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          parsing: false, // IMPORTANT: because we use {x,y}
+
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top'
+            },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const x = ctx.raw.x;
+                  const y = ctx.raw.y;
+                  return `Speed: ${x} km/h | Avg Energy: ${y.toFixed(3)} kWh`;
+                }
+              }
+            }
           },
-          tooltip: {
-            callbacks: {
-              label: (ctx) => {
-                const x = ctx.raw.x;
-                const y = ctx.raw.y;
-                return `Speed: ${x} km/h | Avg Energy: ${y.toFixed(3)} kWh`;
+
+          scales: {
+            x: {
+              type: 'linear',   // 🔴 critical fix
+              title: {
+                display: true,
+                text: 'Speed (km/h)'
+              }
+            },
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Avg Energy Consumed (kWh)'
               }
             }
           }
-        },
-
-        scales: {
-          x: {
-            type: 'linear',   // 🔴 critical fix
-            title: {
-              display: true,
-              text: 'Speed (km/h)'
-            }
-          },
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: 'Avg Energy Consumed (kWh)'
-            }
-          }
         }
-      }
-    });
-  }
+      });
+    }
 
     function renderDataTable(points) {
       const host = document.getElementById('dataTableHost');
@@ -479,11 +480,23 @@ function renderLineChart(points) {
     }
 
     function downloadCsv() {
-      if (!cachedPoints.length) { showError('No data to download.'); return; }
-      const header = 'weather,frame,speedKmh,energyConsumedKwh,sensorPowerW,socPct';
+      if (!cachedPoints.length) {
+        showError('No data to download.');
+        return;
+      }
+
+      const separator = 'sep=;';
+      const header = 'weather;frame;speedKmh;energyConsumedKwh;sensorPowerW;socPct';
+
       const rows = cachedPoints.map(p =>
-        `${p.weather},${p.frame},${p.speedKmh},${p.energyConsumedKwh},${p.sensorPowerW},${p.socPct}`);
-      downloadBlob([header, ...rows].join('\r\n'), 'demo4_energy_rate.csv', 'text/csv;charset=utf-8;');
+        `${JSON.stringify(p.weather ?? '')};${JSON.stringify(p.frame ?? '')};${JSON.stringify(p.speedKmh ?? '')};${JSON.stringify(p.energyConsumedKwh ?? '')};${JSON.stringify(p.sensorPowerW ?? '')};${JSON.stringify(p.socPct ?? '')}`
+      );
+
+      downloadBlob(
+        [separator, header, ...rows].join('\r\n'),
+        'demo4_energy_rate.csv',
+        'text/csv;charset=utf-8;'
+      );
     }
 
     function downloadJson() {
@@ -511,6 +524,7 @@ function renderLineChart(points) {
       });
     });
   </script>
+  <script src="../js/image-viewer.js"></script>
 </body>
 
 </html>

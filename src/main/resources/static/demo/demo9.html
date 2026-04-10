@@ -414,17 +414,19 @@ LIMIT 5000`;
         return;
       }
 
+      const separator = 'sep=;';
       const header = ['timestamp', 'formattedTime', 'activePowerW', 'shiftable'];
+
       const lines = points.map((p) => [
         p.timestamp,
         formatTimestamp(p.timestamp),
         p.activePowerW,
         p.shiftable
-      ].map((v) => JSON.stringify(v ?? '')).join(','));
+      ].map((v) => JSON.stringify(v ?? '')).join(';'));
 
       downloadFile(
         'demo9_active_power_series.csv',
-        [header.join(','), ...lines].join('\n'),
+        [separator, header.join(';'), ...lines].join('\n'),
         'text/csv;charset=utf-8;'
       );
     }
@@ -478,6 +480,7 @@ LIMIT 5000`;
       }
     });
   </script>
+  <script src="../js/image-viewer.js"></script>
 </body>
 
 </html>

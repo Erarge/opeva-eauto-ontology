@@ -10,7 +10,7 @@ body {
   --hotspot-hover: rgba(3, 166, 241, 0.514);
   --hotspot-shadow: 0 0 1.2vmin 0.35vmin rgba(0, 0, 0, 0.85);
   --logo-radius: 8px;
-  --logo-offset: 50px;
+  --logo-offset: 10px;
   --logo-width: 300px;
 }
 
@@ -75,10 +75,13 @@ body {
   border-radius: var(--logo-radius);
   cursor: pointer;
   transition: transform 0.3s ease;
+
+  width: clamp(80px, 12vw, 180px);
 }
 
 .logo img {
-  width: var(--logo-width);
+  width: 100%;
+  height: auto;
   display: block;
 }
 
