@@ -1,1 +1,1 @@
-"C:\ERARGE Apps\apache-maven-3.9.11\bin\mvn" install
+mvn install
