@@ -25,6 +25,7 @@ The platform provides dedicated pages for eight OPEVA demonstrations:
 | Demo 6 & 8 | Inductive Charging Integration |
 | Demo 7 | Functional Safety — Anomaly Detection |
 | Demo 9 | Flexible Charging Scheduler |
+| Demo 10 | AI-Powered Digital Twin for Real-Time Collision Prediction |
 
 Each demo page executes live SPARQL queries against the knowledge graph, displays KPI summaries and interactive charts, and allows downloading the result dataset as CSV or JSON.
 
