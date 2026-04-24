@@ -17,3 +17,5 @@ Thumbs.db
 # Keep application.properties local only, use application.properties.example as template
 src/main/resources/application.properties
 
+#build file
+build.bat
